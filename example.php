@@ -1,5 +1,10 @@
 <?php
 
+/*
+ * PHPTuenti by @shoghicp
+ * Under LGPL LICENSE
+*/
+
 	function cli_read(){
 		$handle = fopen ("php://stdin","r");
 		$line = trim(fgets($handle));

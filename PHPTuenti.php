@@ -1,5 +1,10 @@
 <?php
 
+/*
+ * PHPTuenti by @shoghicp
+ * Under LGPL LICENSE
+*/
+
 class PHPTuenti{
 	protected $cookie, $csrf_token, $user;
 	
