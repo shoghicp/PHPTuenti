@@ -38,6 +38,23 @@ class PHPTuenti{
 		return strstr(str_replace('return false;">Ver todos</a><span class="counter">(','',strstr($page,'return false;">Ver todos</a><span class="counter">(')),')</span>',true);
 	}	
 
+	public function postBlogEntry($title,$text){
+		$this->cookie['tempHash'] = $this->page("home");
+		$ch = curl_init ("http://www.tuenti.com/?m=Profile&func=process_add_blog_entry&ajax=1&store=0&ajax_target=blog");
+		curl_setopt ($ch, CURLOPT_POST, 1);
+		curl_setopt ($ch, CURLOPT_POSTFIELDS, array(
+			'user_id' => $this->user["userId"],
+			'csfr' => $this->csrf_token,
+			'blog_entry_title' => $title,
+			'blog_entry_body' => $text,
+		));
+		curl_setopt ($ch, CURLOPT_HTTPHEADER, array(
+			'Referer' => 'http://www.tuenti.com/',
+		));
+		curl_setopt ($ch, CURLOPT_COOKIE, $this->get_cookies());
+		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
+		return curl_exec ($ch);
+	}
 	
 	public function postStatus($status,$twitter=false){
 		$this->cookie['tempHash'] = $this->page("home");
@@ -51,7 +68,7 @@ class PHPTuenti{
 		));
 		curl_setopt ($ch, CURLOPT_COOKIE, $this->get_cookies());
 		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
-		return curl_exec ($ch);		
+		return curl_exec ($ch);
 	}
 	
 	public function postToUserWall($status,$user){

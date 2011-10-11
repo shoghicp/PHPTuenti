@@ -17,8 +17,10 @@
 		echo "\t[1] Postear Estado",PHP_EOL;
 		echo "\t[2] Postear en Muro de usuario",PHP_EOL;
 		echo "\t[3] Cambiar Privacidad",PHP_EOL;
-		echo "\t[4] Cambiar Acerca De",PHP_EOL;
-		echo "\t[5] Salir de Tuenti",PHP_EOL;
+		echo "\t[4] Crear post en blog",PHP_EOL;
+		echo "\t[5] Cambiar Acerca De",PHP_EOL;
+		echo "\t[6] Salir de Tuenti",PHP_EOL;
+		echo "\t[7] Salir del programa",PHP_EOL;
 		echo "Elige: ";
 		return cli_read();
 	}
@@ -52,14 +54,6 @@
 				$tuenti->postStatus(cli_read());
 				echo "Estado posteado!";
 				break;
-				
-			case 3:
-				echo "Cambia la privacidad (valor para todo, 0/10/20/50): ";
-				$v = cli_read();
-				$tuenti->changePrivacy($v,$v,$v,$v,$v);
-				echo "Privacidad cambiada!!";
-				break;
-				
 			case 2:
 				echo "ID usuario para postear: ";
 				$id = cli_read();
@@ -68,11 +62,29 @@
 				echo "Mensaje posteado!!";
 				break;
 				
-			case 5:
+			case 3:
+				echo "Cambia la privacidad (valor para todo, 0/10/20/50): ";
+				$v = cli_read();
+				$tuenti->changePrivacy($v,$v,$v,$v,$v);
+				echo "Privacidad cambiada!!";
+				break;
+				
+			case 4:
+				echo "Titulo del post: ";
+				$title = cli_read();
+				echo "Texto: ";
+				$tuenti->postBlogEntry($title,cli_read());
+				echo "Mensaje posteado!!";
+				break;
+				
+			case 6:
 				echo "Saliendo...",PHP_EOL;
 				$tuenti->logout();
 				echo "Listo!",PHP_EOL;
 				die();
+				break;
+			case 7:
+				die("Adios!!");
 				break;
 								
 		}
