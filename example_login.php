@@ -31,6 +31,6 @@ echo "Email: ",$info["userMail"],PHP_EOL;
 echo "ID: ",$info["userId"],PHP_EOL;
 echo "Amigos: ",$tuenti->getFriendsCount(),PHP_EOL;
 echo "Visitas: ",$tuenti->getViews(),PHP_EOL;
-
+echo "Invitaciones: ",$tuenti->getRestInvites(),PHP_EOL;
 
 ?>

@@ -32,11 +32,33 @@ class PHPTuenti{
 		$page = $this->get("?".$this->page("home")."&ajax=1&store=1&ajax_target=canvas");
 		return strstr(str_replace('<div class="views"><strong>','',strstr($page,'<div class="views"><strong>')),'</strong>',true);
 	}
+	
+	public function getRestInvites(){
+		$page = $this->get("?".$this->page("home")."&ajax=1&store=1&ajax_target=canvas");
+		return strstr(str_replace('_input_tip" value="Email"/><span class="tip"><strong>','',strstr($page,'_input_tip" value="Email"/><span class="tip"><strong>')),'</strong>',true);
+	}
 
-	public function getFriendsCount(){
-		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas");
+	public function getFriendsCount($user=""){
+		if($user!=""){$user = "&user_id=".$user;}
+		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas".$user);
 		return strstr(str_replace('return false;">Ver todos</a><span class="counter">(','',strstr($page,'return false;">Ver todos</a><span class="counter">(')),')</span>',true);
 	}	
+	
+	public function sendInvite($email){
+		$ch = curl_init ("http://www.tuenti.com/?m=Home&func=process_invitation&ajax=1&store=0&ajax_target=canvas");
+		curl_setopt ($ch, CURLOPT_POST, 1);
+		curl_setopt ($ch, CURLOPT_POSTFIELDS, array(
+			'migration' => 'false',
+			'csfr' => $this->csrf_token,
+			'invitation_address' => $email,
+		));
+		curl_setopt ($ch, CURLOPT_HTTPHEADER, array(
+			'Referer' => 'http://www.tuenti.com/',
+		));
+		curl_setopt ($ch, CURLOPT_COOKIE, $this->get_cookies());
+		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
+		return curl_exec ($ch);
+	}
 
 	public function postBlogEntry($title,$text){
 		$this->cookie['tempHash'] = $this->page("home");
@@ -153,8 +175,20 @@ class PHPTuenti{
 		return curl_exec ($ch);	
 	}
 	
-	public function getUserInfo(){
-		return $this->user;	
+	public function getUserInfo($useri=""){
+		if($useri!=""){
+			$useri = intval($useri);
+			$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$useri);
+			$user = array();
+			$name = explode(" ",strstr(str_replace('<h1 id="profile_status_title">','',strstr($page,'<h1 id="profile_status_title">')),'<span',true)." ");
+			$user["userFirstName"] = $name[0];
+			$user["userLastName"] = trim($name[1]." ".$name[2]);
+			$user["userMail"] = ""; //No tengo tiempo :p
+			$user["userId"] = $useri;
+			return $user;
+		}else{
+			return $this->user;	
+		}
 	}
 	
 	/*
@@ -211,6 +245,7 @@ class PHPTuenti{
 				$this->cookie[$b[0]]=urldecode($b[1]);				
 			}
 		}
+		$this->setConf();
 		return true;
 	}
 	
