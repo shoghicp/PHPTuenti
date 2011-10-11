@@ -43,6 +43,26 @@ class PHPTuenti{
 		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas".$user);
 		return strstr(str_replace('return false;">Ver todos</a><span class="counter">(','',strstr($page,'return false;">Ver todos</a><span class="counter">(')),')</span>',true);
 	}	
+
+	public function getUserInfo($useri=""){
+		if($useri!=""){
+			$useri = intval($useri);
+			$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$useri);
+			$user = array();
+			$name = explode(" ",strstr(str_replace('<h1 id="profile_status_title">','',strstr($page,'<h1 id="profile_status_title">')),'<span',true)." ");
+			$user["userFirstName"] = $name[0];
+			$user["userLastName"] = trim($name[1]." ".$name[2]);
+			$user["userMail"] = ""; //No tengo tiempo :p
+			$user["userId"] = $useri;
+			return $user;
+		}else{
+			return $this->user;	
+		}
+	}
+	
+	public function getUserId(){
+		return $this->user["userId"];	
+	}	
 	
 	public function sendInvite($email){
 		$ch = curl_init ("http://www.tuenti.com/?m=Home&func=process_invitation&ajax=1&store=0&ajax_target=canvas");
@@ -84,6 +104,21 @@ class PHPTuenti{
 		curl_setopt ($ch, CURLOPT_POST, 1);
 		curl_setopt ($ch, CURLOPT_POSTFIELDS, array(
 			'req' => '[{"csfr":"'.$this->csrf_token.'"},{"Status":{"updateStatus":{"statusRaw":"'.addslashes($status).'","postToTwitter":'.(($twitter==true) ? "true":"false").'}}}]',
+		));
+		curl_setopt ($ch, CURLOPT_HTTPHEADER, array(
+			'Referer' => 'http://www.tuenti.com/',
+		));
+		curl_setopt ($ch, CURLOPT_COOKIE, $this->get_cookies());
+		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
+		return curl_exec ($ch);
+	}
+	
+	public function sendMessage($text,$user){
+		$this->cookie['tempHash'] = $this->page("home");
+		$ch = curl_init ("http://www.tuenti.com/index.php?control-mode=1");
+		curl_setopt ($ch, CURLOPT_POST, 1);
+		curl_setopt ($ch, CURLOPT_POSTFIELDS, array(
+			'req' => '[{"csfr":"'.$this->csrf_token.'"},{"Messages":{"newThread":{"toUserId":"'.$user.'","messageBody":"'.$text.'"}}}]',
 		));
 		curl_setopt ($ch, CURLOPT_HTTPHEADER, array(
 			'Referer' => 'http://www.tuenti.com/',
@@ -175,21 +210,7 @@ class PHPTuenti{
 		return curl_exec ($ch);	
 	}
 	
-	public function getUserInfo($useri=""){
-		if($useri!=""){
-			$useri = intval($useri);
-			$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$useri);
-			$user = array();
-			$name = explode(" ",strstr(str_replace('<h1 id="profile_status_title">','',strstr($page,'<h1 id="profile_status_title">')),'<span',true)." ");
-			$user["userFirstName"] = $name[0];
-			$user["userLastName"] = trim($name[1]." ".$name[2]);
-			$user["userMail"] = ""; //No tengo tiempo :p
-			$user["userId"] = $useri;
-			return $user;
-		}else{
-			return $this->user;	
-		}
-	}
+	
 	
 	/*
 	-------------------------------------------------
