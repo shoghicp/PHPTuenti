@@ -178,12 +178,39 @@ class PHPTuenti{
 		if(strpos($page,"self.location.href='http://www.tuenti.com/?m=login';")!==false){
 			return false;
 		}
-		$this->csrf_token = substr(strstr($page,',"csrf":"'),9,8);
-		$this->user = array();
-		$this->user["userFirstName"] = strstr(str_replace(',"userFirstName":"','',strstr($page,',"userFirstName":')),'"',true);
-		$this->user["userLastName"] = strstr(str_replace(',"userLastName":"','',strstr($page,',"userLastName":')),'"',true);
-		$this->user["userMail"] = strstr(str_replace(',"userMail":"','',strstr($page,',"userMail":')),'"',true);
-		$this->user["userId"] = strstr(str_replace('"requestHandler":{"username":','',strstr($page,'"requestHandler":{"username":')),',',true);
+		$this->setConf($page);
+		return true;
+	}
+	
+	public function login($email,$password){
+		$ch = curl_init ("https://secure.tuenti.com/?m=Login&func=do_login");
+		curl_setopt ($ch, CURLOPT_POST, 1);
+		curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt ($ch, CURLOPT_POSTFIELDS, array(
+			'email' => $email,
+			'remember' => 'on',
+			'input_password' => $password,
+			'timezone' => '1',
+			'timestamp' => '1',
+		));
+		curl_setopt ($ch, CURLOPT_HEADER, true);
+		curl_setopt ($ch, CURLOPT_HTTPHEADER, array(
+			'Referer' => 'http://www.tuenti.com/',
+		));
+		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
+		$page = curl_exec ($ch);
+		if(strpos($page,"Location: http://www.tuenti.com/?m=login")!==false){
+			return false;
+		}
+		$headers = explode("\n",$page);
+		foreach($headers as $head){
+			$head = explode(":",$head);
+			if(trim($head[0])=='Set-Cookie'){
+				$cookie = explode(";",trim($head[1]));
+				$b = explode("=",trim($cookie[0]));
+				$this->cookie[$b[0]]=urldecode($b[1]);				
+			}
+		}
 		return true;
 	}
 	
@@ -194,6 +221,21 @@ class PHPTuenti{
 			"profile" => "m=Profile&func=index",
 		);
 		return $pages[$page];
+	}
+	
+	protected function setConf($page=false){
+		if($page===false){
+			$page=$this->page("index");
+			$this->cookie['redirect_url'] = $page;
+			$page = $this->load($page);
+			unset($this->cookie['redirect_url']);		
+		}
+		$this->csrf_token = substr(strstr($page,',"csrf":"'),9,8);
+		$this->user = array();
+		$this->user["userFirstName"] = strstr(str_replace(',"userFirstName":"','',strstr($page,',"userFirstName":')),'"',true);
+		$this->user["userLastName"] = strstr(str_replace(',"userLastName":"','',strstr($page,',"userLastName":')),'"',true);
+		$this->user["userMail"] = strstr(str_replace(',"userMail":"','',strstr($page,',"userMail":')),'"',true);
+		$this->user["userId"] = strstr(str_replace('"requestHandler":{"username":','',strstr($page,'"requestHandler":{"username":')),',',true);	
 	}
 	
 	protected function get_cookies(){
