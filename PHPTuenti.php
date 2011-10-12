@@ -42,7 +42,7 @@ class PHPTuenti{
 		if($user!=""){$user = "&user_id=".$user;}
 		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas".$user);
 		return strstr(str_replace('return false;">Ver todos</a><span class="counter">(','',strstr($page,'return false;">Ver todos</a><span class="counter">(')),')</span>',true);
-	}	
+	}
 
 	public function getUserInfo($useri=""){
 		if($useri!=""){
@@ -60,9 +60,60 @@ class PHPTuenti{
 		}
 	}
 	
+	public function getUserState($user=""){
+		if($user==""){
+			$user = $this->getUserId();
+		}
+		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$user);
+		return (($user==$this->getUserId()) ? strip_tags(strstr(str_replace('<p class="status">','',strstr($page,'<p class="status">')),'</p><span class="metaInfo">',true)):strip_tags(strstr(str_replace('<span id="user_status_corner" class="corner"></span>','',strstr($page,'<span id="user_status_corner" class="corner"></span>')),'<span class="date">',true)));
+	}
+	
 	public function getUserId(){
 		return $this->user["userId"];	
 	}	
+	
+	public function uploadPhoto($path){
+		$ch = curl_init ("http://fotos.tuenti.com/?m=upload&iframe=1");
+		curl_setopt ($ch, CURLOPT_POST, 1);
+		curl_setopt ($ch, CURLOPT_POSTFIELDS, array(
+			'func' => 'addq',
+			'wf' => "",
+			'rotate' => 0,
+			basename($path) => "@".$path,
+		));
+		curl_setopt ($ch, CURLOPT_HTTPHEADER, array(
+			'Referer' => 'http://www.tuenti.com/',
+		));
+		curl_setopt ($ch, CURLOPT_COOKIE, $this->get_cookies());
+		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
+		$page = curl_exec ($ch);
+		$ch = curl_init ("http://fotos.tuenti.com/?m=upload&iframe=1");
+		curl_setopt ($ch, CURLOPT_POST, 1);
+		curl_setopt ($ch, CURLOPT_POSTFIELDS, array(
+			'func' => 'checkq',
+			'wf' => "",
+			'qid' => 1,
+		));
+		curl_setopt ($ch, CURLOPT_HTTPHEADER, array(
+			'Referer' => 'http://www.tuenti.com/',
+		));
+		curl_setopt ($ch, CURLOPT_COOKIE, $this->get_cookies());
+		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
+		$page = curl_exec ($ch);
+		$ch = curl_init ("http://www.tuenti.com/?m=Uploadphoto&func=log_uploaded_photos&ajax=1&store=0&ajax_target=canvas");
+		curl_setopt ($ch, CURLOPT_POST, 1);
+		curl_setopt ($ch, CURLOPT_POSTFIELDS, array(
+			'usi' => 1,
+			'csfr' => $this->csrf_token,
+			'uup' => 4,
+		));
+		curl_setopt ($ch, CURLOPT_HTTPHEADER, array(
+			'Referer' => 'http://www.tuenti.com/',
+		));
+		curl_setopt ($ch, CURLOPT_COOKIE, $this->get_cookies());
+		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, true);
+		$page = curl_exec ($ch);
+	}
 	
 	public function sendInvite($email){
 		$ch = curl_init ("http://www.tuenti.com/?m=Home&func=process_invitation&ajax=1&store=0&ajax_target=canvas");
