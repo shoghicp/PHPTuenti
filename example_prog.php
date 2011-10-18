@@ -2,6 +2,7 @@
 
 /*
  * PHPTuenti by @shoghicp
+ * https://github.com/shoghicp/PHPTuenti
  * Under LGPL LICENSE
 */
 
