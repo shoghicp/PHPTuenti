@@ -7,15 +7,7 @@
 */
 
 class PHPTuenti{
-	protected $cookie, $csrf_token, $user, $cache;
-	
-	/*
-	-------------------------------------------------
-	*/
-	
-	function __construct(){
-		$cache = array();	
-	}
+	protected $cookie, $csrf_token, $user, $cache, $DOMcache;
 	
 	public function logout(){
 		$this->cookie['tempHash'] = "m=Logout&func=log_out";
@@ -34,19 +26,48 @@ class PHPTuenti{
 	}
 	
 	public function getViews(){
-		$page = $this->get("?".$this->page("home")."&ajax=1&store=1&ajax_target=canvas");
-		return strstr(str_replace('<div class="views"><strong>','',strstr($page,'<div class="views"><strong>')),'</strong>',true);
+		$page = $this->get("?".$this->page("home")."&ajax=1&store=1&ajax_target=canvas",true);
+		return $page->find("div.views",0)->first_child()->innertext;
 	}
 	
 	public function getRestInvites(){
-		$page = $this->get("?".$this->page("home")."&ajax=1&store=1&ajax_target=canvas");
-		return strstr(str_replace('_input_tip" value="Email"/><span class="tip"><strong>','',strstr($page,'_input_tip" value="Email"/><span class="tip"><strong>')),'</strong>',true);
+		$page = $this->get("?".$this->page("home")."&ajax=1&store=1&ajax_target=canvas",true);
+		return $page->find("div#invitations",0)->find("span.tip",0)->first_child()->innertext;
 	}
 
 	public function getFriendsCount($user=""){
 		if($user!=""){$user = "&user_id=".$user;}
-		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas".$user);
-		return strstr(str_replace('return false;">Ver todos</a><span class="counter">(','',strstr($page,'return false;">Ver todos</a><span class="counter">(')),')</span>',true);
+		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas".$user,true);
+		return str_replace(array("(",")","."),"",$page->find("div#friends",0)->find("span.counter",0)->innertext);
+	}
+	
+	public function getFriends($user=""){
+		if($user != ""){
+			$count = ceil($this->getFriendsCount($user)/10);
+			$page2 = "?".$this->page("search")."&category=people&filters=".urlencode('{"user_scope":4,"other_user":'.$user.'}')."&ajax=1&store=1&ajax_target=canvas";
+		}else{
+			$user = $this->getUserId();
+			$count = ceil($this->getFriendsCount()/10);
+			$page2 = "?".$this->page("search")."&category=people&filters=".urlencode('{"user_scope":1}')."&ajax=1&store=1&ajax_target=canvas";
+		}
+		$friends = array();
+		for($i=0;$i<$count;++$i){
+			$page = $this->get($page2."&page_no=".$i,true,false);
+			foreach($page->find("ul.searchResults",0)->find("li") as $friendO){
+				$id = substr($friendO->first_child()->id,10);
+				$friend = $friendO->find("div.itemInfoSearch",0);
+				$friends[$id] = array();
+				$name = ($this->getUserId()==$user) ? explode(" ",$friend->first_child()->first_child()->innertext):explode(" ",$friend->first_child()->innertext);
+				$friends[$id]["userId"] = $id;
+				$friends[$id]["userFirstName"] = $name[0];
+				unset($name[0]);
+				$friends[$id]["userLastName"] = trim(implode(" ",$name));
+				$network = explode("<br/>",$friend->find("p.networks",0)->innertext);
+				$friends[$id]["userUbication"] = strstr(str_replace('</span>','',strstr($network[0],'</span>')),"<a ",true).str_get_html($network[0])->find("a",0)->innertext;
+				$friends[$id]["userStudies"] = str_replace('</span>','',strstr($network[1],'</span>'));
+			}
+		}
+		return $friends;
 	}
 
 	public function getUserInfo($useri=""){
@@ -54,9 +75,10 @@ class PHPTuenti{
 			$useri = intval($useri);
 			$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$useri);
 			$user = array();
-			$name = explode(" ",strstr(str_replace('<h1 id="profile_status_title">','',strstr($page,'<h1 id="profile_status_title">')),'<span',true)." ");
+			$name = explode(" ",$page->find("h1#profile_status_title",0)->innertext);
 			$user["userFirstName"] = $name[0];
-			$user["userLastName"] = trim($name[1]." ".$name[2]);
+			unset($name[0]);
+			$user["userLastName"] = trim(implode(" ",$name));
 			$user["userMail"] = ""; //No tengo tiempo :p
 			$user["userId"] = $useri;
 			return $user;
@@ -69,8 +91,8 @@ class PHPTuenti{
 		if($user==""){
 			$user = $this->getUserId();
 		}
-		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$user);
-		return (($user==$this->getUserId()) ? strip_tags(strstr(str_replace('<p class="status">','',strstr($page,'<p class="status">')),'</p><span class="metaInfo">',true)):strip_tags(strstr(str_replace('<span id="user_status_corner" class="corner"></span>','',strstr($page,'<span id="user_status_corner" class="corner"></span>')),'<span class="date">',true)));
+		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$user,true);
+		return (($user==$this->getUserId()) ? $page->find("p.status",0)->plaintext:strip_tags(strstr(str_replace(array('corner"></span>',"&nbsp;"),'',strstr($page->find("div.statusBox",0)->innertext,'corner"></span>')),"<span",true)));
 	}
 	
 	public function getUserId(){
@@ -331,6 +353,7 @@ class PHPTuenti{
 			"index" => "m=Home&func=index",
 			"home" => "m=Home&func=view_home",
 			"profile" => "m=Profile&func=index",
+			"search" => "m=Multiitemsearch&func=index",
 		);
 		return $pages[$page];
 	}
@@ -347,7 +370,7 @@ class PHPTuenti{
 		$this->user["userFirstName"] = strstr(str_replace(',"userFirstName":"','',strstr($page,',"userFirstName":')),'"',true);
 		$this->user["userLastName"] = strstr(str_replace(',"userLastName":"','',strstr($page,',"userLastName":')),'"',true);
 		$this->user["userMail"] = strstr(str_replace(',"userMail":"','',strstr($page,',"userMail":')),'"',true);
-		$this->user["userId"] = strstr(str_replace('"requestHandler":{"username":','',strstr($page,'"requestHandler":{"username":')),',',true);	
+		$this->user["userId"] = strstr(str_replace('"requestHandler":{"username":','',strstr($page,'"requestHandler":{"username":')),',',true);
 	}
 	
 	protected function get_cookies(){
@@ -366,6 +389,8 @@ class PHPTuenti{
 	public function load($page, $HtmlDOM=false, $cache=true){
 		if($cache == true and $this->getCache($page,true)){
 			$str = $this->getCache($page);
+		}elseif($HtmlDOM == true and $cache == true and $this->getDOMCache($page,true)){
+			return $this->getDOMCache($page);
 		}else{
 			$this->cookie['tempHash'] = $page;
 			$ch = curl_init("http://www.tuenti.com/");
@@ -378,7 +403,8 @@ class PHPTuenti{
 			$this->setCache($page,$str);
 		}
 		if($HtmlDOM == true){
-			return str_get_html($str);
+			$str = str_get_html($str);
+			$this->setDOMCache($page,$str);
 		}
 		return $str;		
 	}
@@ -386,6 +412,8 @@ class PHPTuenti{
 	public function get($page, $HtmlDOM=false, $cache=true){
 		if($cache == true and $this->getCache($page,true)){
 			$str = $this->getCache($page);
+		}elseif($HtmlDOM == true and $cache == true and $this->getDOMCache($page,true)){
+			return $this->getDOMCache($page);
 		}else{
 			$ch = curl_init("http://www.tuenti.com/".$page);
 			curl_setopt($ch, CURLOPT_HTTPHEADER, array(
@@ -397,9 +425,10 @@ class PHPTuenti{
 			$this->setCache($page,$str);
 		}
 		if($HtmlDOM == true){
-			return str_get_html($str);
+			$str = str_get_html($str);
+			$this->setDOMCache($page,$str);
 		}
-		return $str;		
+		return $str;
 	}
 	
 	protected function setCache($name,$value){
@@ -417,6 +446,29 @@ class PHPTuenti{
 			return true;
 		}
 		return false;
+	}
+	
+	protected function setDOMCache($name,$html){
+		$name = md5($name);
+		$this->DOMCache[$name] = str_get_html($html);
+		return true;
+	}
+	
+	protected function getDOMCache($name){
+		$name = md5($name);
+		if(isset($this->DOMCache[$name])){
+			if($exist==false){
+				return $this->DOMCache[$name];
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	
+	function __construct(){
+		$this->cache = array();
+		$this->DOMCache = array();
 	}
 	
 }
