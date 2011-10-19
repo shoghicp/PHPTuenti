@@ -154,8 +154,23 @@ class PHPTuenti{
 		if($user==""){
 			$user = $this->getUserId();
 		}
-		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$user,true);
-		return (($user==$this->getUserId()) ? $page->find("p.status",0)->plaintext:strip_tags(strstr(str_replace(array('corner"></span>',"&nbsp;"),'',strstr($page->find("div.statusBox",0)->innertext,'corner"></span>')),"<span",true)));
+		$page = $this->get("?m=Wall&func=view_wall_posts&filter=1&filter_author=0&wall_page=0&wall_id=1%2C".$user."&ajax=1&store=0&ajax_target=wall_posts_content",true);
+		return $page->find("p.status",0)->plaintext;
+	}
+	
+	public function getLastStates($user="",$limit=20){
+		if($user==""){
+			$user = $this->getUserId();
+		}
+		$arr = array();
+		$limit=ceil($limit/10);
+		for($i=0;$i<$limit;++$i){
+			$page = $this->get("?m=Wall&func=view_wall_posts&filter=1&filter_author=0&wall_page=".$i."&wall_id=1%2C".$user."&ajax=1&store=0&ajax_target=wall_posts_content",true);
+			foreach($page->find("p.status") as $status){
+				$arr[] = $status->plaintext;
+			}
+		}
+		return $arr;
 	}
 	
 	public function getUserId(){
@@ -348,8 +363,27 @@ class PHPTuenti{
 		));
 		curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		return curl_exec($ch);
+	}
+	
+	public function changeUserName($first,$last){
+		$this->cookie['tempHash'] = $this->page("home");
+		$ch = curl_init("http://www.tuenti.com/?m=Settings&func=process_change_name&ajax=1&store=0&ajax_target=canvas");
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+			'csfr' => $this->csrf_token,
+			'first_name' => $first,
+			'surname' => $last,
+		));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+			'Referer' => 'http://www.tuenti.com/',
+		));
+		curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		return curl_exec($ch);	
 	}
+	
+	
 	
 	
 	
