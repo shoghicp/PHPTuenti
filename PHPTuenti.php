@@ -71,6 +71,67 @@ class PHPTuenti{
 		}
 		return $friends;
 	}
+	
+	public function getMessages($box="inbox"){
+		/*
+			ESTA FUNCION REALIZA MUCHAS PETICIONES!!!!
+			advertido estas		
+		*/
+		$this->cookie['tempHash'] = "m=Message&func=index&boxName=".$box;
+		switch($box){		
+			case "inbox":
+			default:
+				$box="getInbox";
+			break;
+		}
+		$count=1;
+		$messages = array();
+		for($i=0;$i<$count;++$i){		
+			$ch = curl_init("http://www.tuenti.com/index.control.php");
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+				'req' => '[{"csfr":"'.$this->csrf_token .'"},{"Messages":{"'.$box.'":{"page":'.$i.'}}},{"Messages":"getUnreadSpamCount"},{"Messages":"getUnreadThreads"},{"Messages":"getUnreadVoicemailCount"}]',
+			));
+			curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+				'Referer' => 'http://www.tuenti.com/',
+			));
+			curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			$ret = json_decode(curl_exec($ch),true);
+			$count = ceil($ret["output"][0]["pager"]["totalItems"]/25);
+			foreach($ret["output"][0]["threadBox"]["threads"] as $mess){			
+				$ch = curl_init("http://www.tuenti.com/index.control.php");
+				curl_setopt($ch, CURLOPT_POST, 1);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+					'req' => '[{"csfr":"'.$this->csrf_token .'"},{"Messages":{"getThreadContents":{"threadId":"'.$mess["threadId"].'","boxName":"inbox"}}}]',
+				));
+				curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+					'Referer' => 'http://www.tuenti.com/',
+				));
+				curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				$thread = json_decode(curl_exec($ch),true);
+				if($thread["output"][0]["isOldThread"]==1){
+					continue;
+				}				
+				$messages[$mess["threadId"]] = array();
+				foreach($thread["output"][0]["messages"] as $id => $tMess){
+					$messages[$mess["threadId"]][$id] = array();
+					$messages[$mess["threadId"]][$id]["isUnread"] = ($tMess["isUnread"]==1) ? true:false;
+					$messages[$mess["threadId"]][$id]["senderId"] = $tMess["senderId"];
+					$messages[$mess["threadId"]][$id]["senderFullName"] = $tMess["senderFullName"];
+					$messages[$mess["threadId"]][$id]["senderIsMe"] = ($this->getUserId==$tMess["senderId"]) ? true:false;
+					$messages[$mess["threadId"]][$id]["sendDate"] = $tMess["sendDate"];
+					$messages[$mess["threadId"]][$id]["messageBody"] = "";
+					foreach($tMess["richMedia"] as $line){
+						$messages[$mess["threadId"]][$id]["messageBody"] .= "\r\n".$line["lines"][0]["string"];
+					}
+					$messages[$mess["threadId"]][$id]["messageBody"] = trim($messages[$mess["threadId"]][$id]["messageBody"]);
+				}
+			}
+		}
+		return $messages;
+	}
 
 	public function getUserInfo($useri=""){
 		if($useri!=""){
