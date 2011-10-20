@@ -14,25 +14,28 @@ if($argv[1] == "cookie" and $argc>=2){
 	if(!$tuenti->login_cookie($argv[2])){
 		die("[-] bad cookie".PHP_EOL);
 	}
+	$userId = ($argv[3]!="") ? $argv[3]:$tuenti->getUserId();
 }elseif($argv[1] == "password" and $argc>=3){
 	if(!$tuenti->login($argv[2], $argv[3])){
 		die("[-] bad credentials".PHP_EOL);
-	}	
+	}
+	$userId = ($argv[4]!="") ? $argv[4]:$tuenti->getUserId();
 }else{
-	die("usage: php ".basename(__FILE__)." <auth_mode> <user/cookie> <password>".PHP_EOL."\tauth_mode: cookie, password");
+	die("usage: php ".basename(__FILE__)." <auth_mode> <user/cookie> <password> [userid]".PHP_EOL."\tauth_mode: cookie, password");
 }
-$userinfo = $tuenti->getUserInfo();
-print_r($userinfo);
+$userinfo = $tuenti->getUserInfo($userId);
+
 echo "[*] starting to dump ".$userinfo["userFirstName"]." ".$userinfo["userLastName"]." account...".PHP_EOL;
-$path .= $tuenti->getUserId()."/";
+$path .= $userId."/";
 @mkdir($path);
 @mkdir($path."images/");
 
-$states = $tuenti->getUserStates(200);
+$states = $tuenti->getUserStates(200,$userId);
 
 echo "[*] Writing index page...",PHP_EOL;
 file_put_contents($path."style.css",getCSS());
-@file_put_contents($path."images/".$tuenti->getUserId(),file_get_contents($tuenti->getProfileImage()));
+@file_put_contents($path."images/".$userId,file_get_contents($tuenti->getProfileImage("medium",$userId)));
+@file_put_contents($path."images/".$userId."_big",file_get_contents($tuenti->getProfileImage("big",$userId)));
 $index = "
 <html>
 <head>
@@ -41,12 +44,14 @@ $index = "
 </head>
 <body>";
 $index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
-$index .= '<div class="userHeader"><img src="images/'.$tuenti->getUserid().'"/><h1 class="userName">'.$userinfo["userFirstName"]." ".$userinfo["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
+$index .= '<div class="userHeader"><a href="images/'.$userId.'_big" target="_blank"><img src="images/'.$userId.'"/></a><h1 class="userName">'.$userinfo["userFirstName"]." ".$userinfo["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
 
 $index .= '<span style="font-size:20px;font-weight:bold;">Informacion</span><br/>';
-$index .= 'Visitas: '.$tuenti->getViews().'<br/>';
-$index .= 'Invitaciones: '.$tuenti->getRestInvites().'<br/>';
-$index .= 'Amigos: '.$tuenti->getFriendsCount().'<br/><br/>';
+if($tuenti->getUserId() == $userId){
+	$index .= 'Visitas: '.$tuenti->getViews().'<br/>';
+	$index .= 'Invitaciones: '.$tuenti->getRestInvites().'<br/>';
+}
+$index .= 'Amigos: '.$tuenti->getFriendsCount($userId).'<br/><br/>';
 
 $index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
 foreach($states as $state){
@@ -60,7 +65,7 @@ file_put_contents($path."index.html",$index);
 unset($states);
 
 echo "[*] writing friends page...",PHP_EOL;
-$friends = $tuenti->getFriends();
+$friends = $tuenti->getFriends($userId);
 $index = "
 <html>
 <head>
@@ -79,11 +84,13 @@ $index .= "
 </body>
 </html>";
 file_put_contents($path."friends.html",$index);
+echo "\r";
 echo "[*] writing friends personal pages...",PHP_EOL;
 $count2 = 0;
 foreach($friends as $friend){
 	++$count2;
 	@file_put_contents($path."images/".$friend["userId"],file_get_contents($tuenti->getProfileImage("medium",$friend["userId"])));
+	@file_put_contents($path."images/".$friend["userId"]."_big",file_get_contents($tuenti->getProfileImage("big",$friend["userId"])));
 	$states = $tuenti->getUserStates(20,$friend["userId"]);
 	$index = "
 	<html>
@@ -93,7 +100,7 @@ foreach($friends as $friend){
 	</head>
 	<body>";
 	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
-	$index .= '<div class="userHeader"><img src="images/'.$friend["userId"].'"/><h1 class="userName">'.$friend["userFirstName"]." ".$friend["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
+	$index .= '<div class="userHeader"><a href="images/'.$friend["userId"].'_big" target="_blank"><img src="images/'.$friend["userId"].'"/></a><h1 class="userName">'.$friend["userFirstName"]." ".$friend["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
 	$index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
 	foreach($states as $state){
 		$index .= '<div class="state">'.$state.'</div>';
@@ -108,6 +115,7 @@ foreach($friends as $friend){
 }
 unset($friends);
 
+if($tuenti->getUserId() == $userId){
 echo "[*] getting messages...",PHP_EOL;
 $messages = $tuenti->getMessages("inbox");
 echo "[*] writing messages page...",PHP_EOL;
@@ -163,7 +171,7 @@ foreach($messages as $threadId => $thread){
 	foreach($thread as $mess){
 		++$c;
 		$index .= '<div class="message">';
-		$index .= '<span class="body">'.$mess["messageBody"].'</span><a href="'.(($mess["senderId"]==$tuenti->getUserId()) ? "index":$mess["senderId"]).'.html">';
+		$index .= '<span class="body">'.$mess["messageBody"].'</span><a href="'.(($mess["senderId"]==$userId) ? "index":$mess["senderId"]).'.html">';
 		$index .= '<span class="sender"><img src="images/'.$mess["senderId"].'"/><span class="text">'.$mess["senderFullName"].'</span></span></a><span class="date">'.date("j \d\e M, H:i",$mess["sentDate"]).'</span>';
 		$index .= '</div>';
 	}	
@@ -171,8 +179,11 @@ foreach($messages as $threadId => $thread){
 	$index .= "
 	</body>
 	</html>";
-	file_put_contents($path."thread".$threadId.".html",$index);	
+	file_put_contents($path."thread".$threadId.".html",$index);
 	show_status($count2,$count);
+}
+}else{
+	file_put_contents($path."messages.html","You aren't this user");
 }
 
 die("[+] Done!!".PHP_EOL);

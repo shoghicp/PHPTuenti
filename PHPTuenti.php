@@ -40,6 +40,9 @@ class PHPTuenti{
 	public function getProfileImage($size="medium",$user=""){
 		if($user==""){$user = $this->getUserId();}
 		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$user,true);
+		if(is_object($page->find("div#multiitemsearch",0))){
+			return false;
+		}
 		switch($size){
 			case "big":
 				$photoId = str_replace(array("&amp;s=0","#m=Photo&amp;func=view_photo&amp;collection_key="),"",$page->find("div#avatar",0)->find("a",0)->href);
@@ -93,7 +96,7 @@ class PHPTuenti{
 				$id = substr($friendO->first_child()->id,10);
 				$friend = $friendO->find("div.itemInfoSearch",0);
 				$friends[$id] = array();
-				$name = ($this->getUserId()==$user) ? explode(" ",$friend->first_child()->first_child()->innertext." "):explode(" ",$friend->first_child()->innertext." ");
+				$name = ($this->getUserId()==$user) ? explode(" ",$friend->first_child()->first_child()->innertext." "):explode(" ",(!is_object($friend->first_child()->first_child()) ? $friend->first_child()->innertext:$friend->first_child()->first_child()->innertext)." ");
 				$friends[$id]["userId"] = $id;
 				$friends[$id]["userFirstName"] = $name[0];
 				unset($name[0]);
@@ -184,7 +187,7 @@ class PHPTuenti{
 			
 			if($useri!=$this->getUserId()){
 				$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$useri,true);
-				$name = explode(" ",$page->find("h1#profile_status_title",0)->innertext);
+				$name = explode(" ",strstr($page->find("h1#profile_status_title",0)->innertext,"<",true));
 			}else{
 				$page = $this->get("?".$this->page("index")."&ajax=1&store=1&ajax_target=canvas",true);
 				$name = explode(" ",$page->find("a#home_user_name",0)->innertext);
@@ -203,6 +206,9 @@ class PHPTuenti{
 			$user = $this->getUserId();
 		}
 		$page = $this->get("?m=Wall&func=view_wall_posts&filter=1&filter_author=0&wall_page=0&wall_id=1%2C".$user."&ajax=1&store=0&ajax_target=wall_posts_content",true);
+		if(is_object($page->find("div#multiitemsearch",0))){
+			return false;
+		}
 		return $page->find("p.status",0)->plaintext;
 	}
 	
@@ -214,6 +220,9 @@ class PHPTuenti{
 		$limit=ceil($limit/10);
 		for($i=0;$i<$limit;++$i){
 			$page = $this->get("?m=Wall&func=view_wall_posts&filter=1&filter_author=0&wall_page=".$i."&wall_id=1%2C".$user."&ajax=1&store=0&ajax_target=wall_posts_content",true);
+			if(is_object($page->find("div#multiitemsearch",0))){
+				return array();
+			}
 			foreach($page->find("p.status") as $status){
 				$arr[] = $status->plaintext;
 			}
