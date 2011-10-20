@@ -32,7 +32,7 @@
 	$path = dirname(__FILE__)."/";
 	require($path."PHPTuenti.php");
 	if($argc<=1){
-		die("usage: ".basename(__FILE__)." \"<cookie>\"");
+		die("usage: php ".basename(__FILE__)." \"<cookie>\"");
 	}
 	$cookie = $argv[1];
 	
