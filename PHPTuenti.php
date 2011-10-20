@@ -40,11 +40,11 @@ class PHPTuenti{
 	public function getProfileImage($size="medium",$user=""){
 		if($user==""){$user = $this->getUserId();}
 		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$user,true);
-		if(is_object($page->find("div#multiitemsearch",0))){
-			return false;
-		}
 		switch($size){
 			case "big":
+				if(is_object($page->find("div#multiitemsearch",0))){
+					return false;
+				}
 				$photoId = str_replace(array("&amp;s=0","#m=Photo&amp;func=view_photo&amp;collection_key="),"",$page->find("div#avatar",0)->find("a",0)->href);
 				$ch = curl_init("http://pdta.tuenti.com/");
 				curl_setopt($ch, CURLOPT_POST, 1);
@@ -62,6 +62,9 @@ class PHPTuenti{
 				
 			case "medium":
 			default:
+				if(is_object($page->find("div#multiitemsearch",0))){
+					return $page->find("div.avatar",0)->find("img",0)->src;
+				}
 				$ret = $page->find("div#avatar",0);
 				if(is_object($ret)){$ret = $ret->find("img",0)->src;}else{return false;}
 				break;
