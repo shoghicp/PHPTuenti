@@ -285,6 +285,10 @@ class PHPTuenti{
 					$this->show_status($count2,$limit2);
 				}
 			}
+			if($arr[count($arr)-2]=="" and $arr[count($arr)-1]==""){
+				$arr = array();
+				break;
+			}
 		}
 		return $arr;
 	}
