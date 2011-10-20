@@ -92,8 +92,7 @@ class PHPTuenti{
 	}
 	
 	public function getPosts($count=20,$user=""){
-		if($user==""){$user = $this->getUserId();}
-		$count=min($this->getPostsCount($user),$count);
+		if($user=="" or $user==$this->getUserId()){$user = $this->getUserId();}else{$count=min($this->getPostsCount($user),$count);}
 		$posts=array();
 		for($i=0;$i<$count;++$i){
 			$page = $this->get("?m=Profile&func=view_blog&blog_page=".$i."&ajax=1&store=1&ajax_target=blog&user_id=".$user,true);
@@ -116,6 +115,10 @@ class PHPTuenti{
 					$vi="";
 				}
 				$t .= strstr($str."<","<",true).$vi."\r\n";
+			}
+			if(trim($t)==$posts[count($posts)-1]){
+				$this->show_status(1,1);
+				break;
 			}
 			$posts[] = trim($t);
 			if($this->progress==true){
@@ -282,6 +285,7 @@ class PHPTuenti{
 			if(is_object($page->find("div#multiitemsearch",0))){
 				return array();
 			}
+			$c=count($arr);
 			foreach($page->find("p.status") as $status){
 				++$count2;
 				$arr[] = $status->plaintext;
@@ -289,8 +293,10 @@ class PHPTuenti{
 					$this->show_status($count2,$limit2);
 				}
 			}
-			if($arr[count($arr)-2]=="" and $arr[count($arr)-1]==""){
-				$arr = array();
+			if(count($arr)==$c){
+				if($this->progress==true){
+					$this->show_status(1,1);
+				}
 				break;
 			}
 		}

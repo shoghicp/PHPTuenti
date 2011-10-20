@@ -30,8 +30,6 @@ $path .= $userId."/";
 @mkdir($path);
 @mkdir($path."images/");
 
-$states = $tuenti->getUserStates(200,$userId);
-
 echo "[*] Writing index page...",PHP_EOL;
 file_put_contents($path."style.css",getCSS());
 @file_put_contents($path."images/".$userId,file_get_contents($tuenti->getProfileImage("medium",$userId)));
@@ -58,6 +56,7 @@ foreach($posts as $post){
 	$index .= '<div class="post">'.nl2br($post,true).'</div>';
 }
 $index .= '</div><br/><br/>';
+$states = $tuenti->getUserStates(200,$userId);
 $index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
 foreach($states as $state){
 	$index .= '<div class="state">'.nl2br($state,true).'</div>';
