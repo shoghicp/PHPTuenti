@@ -9,7 +9,8 @@
 $PHPTuentiPath = dirname(__FILE__)."/";
 
 class PHPTuenti{
-	protected $cookie, $csrf_token, $user, $cache, $DOMcache, $chat, $progress, $useCache;
+	protected $cookie, $csrf_token, $user, $cache, $DOMcache, $chat, $useCache;
+	var $progress;
 	
 	public function logout(){
 		$this->cookie['tempHash'] = "m=Logout&func=log_out";
@@ -72,6 +73,54 @@ class PHPTuenti{
 		unset($page);
 		return $ret;		
 	}
+	
+	public function getPostsCount($user=""){
+		if($user==""){$user = $this->getUserId();}
+		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$user,true);
+		if(is_object($page->find("div#multiitemsearch",0))){
+			return false;
+		}
+		$pg = $page->find("div#blog",0)->find("div#pager_overlay",0);
+		if(!is_object($pg)){
+			return 0;
+		}
+		return $pg->find("a",1)->rel;	
+	}
+	
+	public function getPosts($count=20,$user=""){
+		if($user==""){$user = $this->getUserId();}
+		$count=min($this->getPostsCount($user),$count);
+		$posts=array();
+		for($i=0;$i<$count;++$i){
+			$page = $this->get("?m=Profile&func=view_blog&blog_page=".$i."&ajax=1&store=1&ajax_target=blog&user_id=".$user,true);
+			$t = "";
+			foreach($page->find("div#show_blog_entry",0)->find("p") as $s){
+				if(trim($s->innertext)=="" or $s->find("span.photo",0)){
+					continue;
+				}
+				$str = str_replace("<br />","\r\n",$s->innertext);
+				$vi = $s->find("img",0);
+				if(is_object($vi)){
+					if(strpos($vi->src,"youtube")){
+						$vi = "http://www.youtube.com/watch?v=".str_replace(array("http://img.youtube.com/vi/","/0.jpg"),"",$vi->src);
+					}elseif($vi->class=="internalImage"){
+						$vi = $vi->src;
+					}else{
+						$vi="";
+					}				
+				}else{
+					$vi="";
+				}
+				$t .= strstr($str."<","<",true).$vi."\r\n";
+			}
+			$posts[] = trim($t);
+			if($this->progress==true){
+				$this->show_status($i+1,$count);
+			}
+		}
+		return $posts;
+	
+	}
 
 	public function getFriendsCount($user=""){
 		if($user!=""){$user = "&user_id=".$user;}
@@ -83,14 +132,15 @@ class PHPTuenti{
 		if($user != ""){
 			$count2 = $this->getFriendsCount($user);
 			$count = ceil($count2/10);
+			$count3=2;
 			$page2 = "?".$this->page("search")."&category=people&filters=".urlencode('{"user_scope":4,"other_user":'.$user.'}')."&ajax=1&store=1&ajax_target=canvas";
 		}else{
 			$user = $this->getUserId();
 			$count2 = $this->getFriendsCount();
 			$count = ceil($count2/10);
+			$count3=0;
 			$page2 = "?".$this->page("search")."&category=people&filters=".urlencode('{"user_scope":1}')."&ajax=1&store=1&ajax_target=canvas";
 		}
-		$count3=0;
 		$friends = array();
 		for($i=0;$i<$count;++$i){
 			$page = $this->get($page2."&page_no=".$i,true,false);
@@ -220,6 +270,8 @@ class PHPTuenti{
 			$user = $this->getUserId();
 		}
 		$arr = array();
+		$limit2=$limit;
+		$count2=0;
 		$limit=ceil($limit/10);
 		for($i=0;$i<$limit;++$i){
 			$page = $this->get("?m=Wall&func=view_wall_posts&filter=1&filter_author=0&wall_page=".$i."&wall_id=1%2C".$user."&ajax=1&store=0&ajax_target=wall_posts_content",true);
@@ -227,7 +279,11 @@ class PHPTuenti{
 				return array();
 			}
 			foreach($page->find("p.status") as $status){
+				++$count2;
 				$arr[] = $status->plaintext;
+				if($this->progress==true){
+					$this->show_status($count2,$limit2);
+				}
 			}
 		}
 		return $arr;
@@ -556,7 +612,7 @@ class PHPTuenti{
 			));
 			curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			$str = utf8_decode(str_replace(array('"href','"onclick','"title','"src'),array('" href','" onclick','" title','" src'),curl_exec($ch)));
+			$str = utf8_decode(str_replace(array('"href','"onclick','"title','"src','"class','"alt',),array('" href','" onclick','" title','" src','" class','" alt',),curl_exec($ch)));
 			if($cache == true and $this->useCache == true){
 				$this->setCache($page,$str);
 			}
@@ -582,7 +638,7 @@ class PHPTuenti{
 			));
 			curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			$str = utf8_decode(str_replace(array('"href','"onclick','"title','"src'),array('" href','" onclick','" title','" src'),curl_exec($ch)));
+			$str = utf8_decode(str_replace(array('"href','"onclick','"title','"src','"class','"alt',),array('" href','" onclick','" title','" src','" class','" alt',),curl_exec($ch)));
 			if($cache == true and $this->useCache == true){
 				$this->setCache($page,$str);
 			}

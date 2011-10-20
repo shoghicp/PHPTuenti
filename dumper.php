@@ -52,10 +52,15 @@ if($tuenti->getUserId() == $userId){
 	$index .= 'Invitaciones: '.$tuenti->getRestInvites().'<br/>';
 }
 $index .= 'Amigos: '.$tuenti->getFriendsCount($userId).'<br/><br/>';
-
+$posts = $tuenti->getPosts(50,$userId);
+$index .= '<div class="posts"><span style="font-size:20px;font-weight:bold;">Espacio personal</span><br/>';
+foreach($posts as $post){
+	$index .= '<div class="post">'.nl2br($post,true).'</div>';
+}
+$index .= '</div><br/><br/>';
 $index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
 foreach($states as $state){
-	$index .= '<div class="state">'.$state.'</div>';
+	$index .= '<div class="state">'.nl2br($state,true).'</div>';
 }
 $index .= "</div>";
 $index .= "
@@ -101,6 +106,14 @@ foreach($friends as $friend){
 	<body>";
 	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
 	$index .= '<div class="userHeader"><a href="images/'.$friend["userId"].'_big" target="_blank"><img src="images/'.$friend["userId"].'"/></a><h1 class="userName">'.$friend["userFirstName"]." ".$friend["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
+	$tuenti->progress=false;
+	$posts = $tuenti->getPosts(10,$friend["userId"]);
+	$tuenti->progress=true;
+	$index .= '<div class="posts"><span style="font-size:20px;font-weight:bold;">Espacio personal</span><br/>';
+	foreach($posts as $post){
+		$index .= '<div class="post">'.nl2br($post,true).'</div>';
+	}
+	$index .= '</div><br/><br/>';	
 	$index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
 	foreach($states as $state){
 		$index .= '<div class="state">'.$state.'</div>';
@@ -206,6 +219,18 @@ img{
 	width: 500px;
 }
 .states .state{
+	padding-bottom:10px;
+	padding-top:5px;
+	position:relative;
+	left:15px;
+	border-bottom:1px dashed gray;
+	width:500px;
+	font-size:15px;
+}
+.posts{
+	width: 500px;
+}
+.posts .post{
 	padding-bottom:10px;
 	padding-top:5px;
 	position:relative;
