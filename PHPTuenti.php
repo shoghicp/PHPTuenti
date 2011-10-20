@@ -9,7 +9,7 @@
 $PHPTuentiPath = dirname(__FILE__)."/";
 
 class PHPTuenti{
-	protected $cookie, $csrf_token, $user, $cache, $DOMcache, $chat;
+	protected $cookie, $csrf_token, $user, $cache, $DOMcache, $chat, $progress, $useCache;
 	
 	public function logout(){
 		$this->cookie['tempHash'] = "m=Logout&func=log_out";
@@ -75,17 +75,21 @@ class PHPTuenti{
 	
 	public function getFriends($user=""){
 		if($user != ""){
-			$count = ceil($this->getFriendsCount($user)/10);
+			$count2 = $this->getFriendsCount($user);
+			$count = ceil($count2/10);
 			$page2 = "?".$this->page("search")."&category=people&filters=".urlencode('{"user_scope":4,"other_user":'.$user.'}')."&ajax=1&store=1&ajax_target=canvas";
 		}else{
 			$user = $this->getUserId();
-			$count = ceil($this->getFriendsCount()/10);
+			$count2 = $this->getFriendsCount();
+			$count = ceil($count2/10);
 			$page2 = "?".$this->page("search")."&category=people&filters=".urlencode('{"user_scope":1}')."&ajax=1&store=1&ajax_target=canvas";
 		}
+		$count3=0;
 		$friends = array();
 		for($i=0;$i<$count;++$i){
 			$page = $this->get($page2."&page_no=".$i,true,false);
 			foreach($page->find("ul.searchResults",0)->find("li") as $friendO){
+				++$count3;
 				$id = substr($friendO->first_child()->id,10);
 				$friend = $friendO->find("div.itemInfoSearch",0);
 				$friends[$id] = array();
@@ -97,6 +101,9 @@ class PHPTuenti{
 				$network = explode("<br/>",$friend->find("p.networks",0)->innertext);
 				$friends[$id]["userUbication"] = strstr(str_replace('</span>','',strstr($network[0],'</span>')),"<a ",true).str_get_html($network[0])->find("a",0)->innertext;
 				$friends[$id]["userStudies"] = str_replace('</span>','',strstr($network[1],'</span>'));
+				if($this->progress==true){
+					$this->show_status($count3,$count2);
+				}
 			}
 			unset($page,$network);
 		}
@@ -116,6 +123,8 @@ class PHPTuenti{
 			break;
 		}
 		$count=1;
+		$count2=1;
+		$count3=0;
 		$messages = array();
 		for($i=0;$i<$count;++$i){		
 			$ch = curl_init("http://www.tuenti.com/index.control.php");
@@ -130,7 +139,9 @@ class PHPTuenti{
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			$ret = json_decode(curl_exec($ch),true);
 			$count = ceil($ret["output"][0]["pager"]["totalItems"]/25);
-			foreach($ret["output"][0]["threadBox"]["threads"] as $mess){			
+			$count2 = $ret["output"][0]["pager"]["totalItems"];
+			foreach($ret["output"][0]["threadBox"]["threads"] as $mess){
+				++$count3;
 				$ch = curl_init("http://www.tuenti.com/index.control.php");
 				curl_setopt($ch, CURLOPT_POST, 1);
 				curl_setopt($ch, CURLOPT_POSTFIELDS, array(
@@ -142,20 +153,23 @@ class PHPTuenti{
 				curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 				$thread = json_decode(curl_exec($ch),true);
-				if($thread["output"][0]["isOldThread"]==1){
+				if($this->progress==true){
+					$this->show_status($count3,$count2);
+				}
+				if($thread["output"][0]["isOldThread"]==1 and count($thread["output"][0]["messages"]) == 0){
 					continue;
-				}				
+				}
 				$messages[$mess["threadId"]] = array();
 				foreach($thread["output"][0]["messages"] as $id => $tMess){
 					$messages[$mess["threadId"]][$id] = array();
 					$messages[$mess["threadId"]][$id]["isUnread"] = ($tMess["isUnread"]==1) ? true:false;
 					$messages[$mess["threadId"]][$id]["senderId"] = $tMess["senderId"];
-					$messages[$mess["threadId"]][$id]["senderFullName"] = $tMess["senderFullName"];
+					$messages[$mess["threadId"]][$id]["senderFullName"] = utf8_decode($tMess["senderFullName"]);
 					$messages[$mess["threadId"]][$id]["senderIsMe"] = ($this->getUserId==$tMess["senderId"]) ? true:false;
-					$messages[$mess["threadId"]][$id]["sendDate"] = $tMess["sendDate"];
+					$messages[$mess["threadId"]][$id]["sentDate"] = $tMess["sentDate"];
 					$messages[$mess["threadId"]][$id]["messageBody"] = "";
 					foreach($tMess["richMedia"] as $line){
-						$messages[$mess["threadId"]][$id]["messageBody"] .= "\r\n".$line["lines"][0]["string"];
+						$messages[$mess["threadId"]][$id]["messageBody"] .= "\r\n".utf8_decode($line["lines"][0]["string"]);
 					}
 					$messages[$mess["threadId"]][$id]["messageBody"] = trim($messages[$mess["threadId"]][$id]["messageBody"]);
 				}
@@ -518,9 +532,9 @@ class PHPTuenti{
 	}
 	
 	public function load($page, $HtmlDOM=false, $cache=true){
-		if($cache == true and $this->cache == true and $this->getCache($page,true)){
+		if($cache == true and $this->useCache == true and $this->getCache($page,true)){
 			$str = $this->getCache($page);
-		}elseif($HtmlDOM == true and $cache == true and $this->cache == true and $this->getDOMCache($page,true)){
+		}elseif($HtmlDOM == true and $cache == true and $this->useCache == true and $this->getDOMCache($page,true)){
 			return $this->getDOMCache($page);
 		}else{
 			$this->cookie['tempHash'] = $page;
@@ -531,13 +545,13 @@ class PHPTuenti{
 			curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			$str = utf8_decode(str_replace(array('"href','"onclick','"title','"src'),array('" href','" onclick','" title','" src'),curl_exec($ch)));
-			if($cache == true and $this->cache == true){
+			if($cache == true and $this->useCache == true){
 				$this->setCache($page,$str);
 			}
 		}
 		if($HtmlDOM == true){
 			$str = str_get_html($str);
-			if($cache == true and $this->cache == true){
+			if($cache == true and $this->useCache == true){
 				$this->setDOMCache($page,$str);
 			}
 		}
@@ -545,9 +559,9 @@ class PHPTuenti{
 	}
 
 	public function get($page, $HtmlDOM=false, $cache=true){
-		if($cache == true and $this->cache == true and $this->getCache($page,true)){
+		if($cache == true and $this->useCache == true and $this->getCache($page,true)){
 			$str = $this->getCache($page);
-		}elseif($HtmlDOM == true and $cache == true and $this->cache == true and $this->getDOMCache($page,true)){
+		}elseif($HtmlDOM == true and $cache == true and $this->useCache == true and $this->getDOMCache($page,true)){
 			return $this->getDOMCache($page);
 		}else{
 			$ch = curl_init("http://www.tuenti.com/".$page);
@@ -557,13 +571,13 @@ class PHPTuenti{
 			curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			$str = utf8_decode(str_replace(array('"href','"onclick','"title','"src'),array('" href','" onclick','" title','" src'),curl_exec($ch)));
-			if($cache == true and $this->cache == true){
+			if($cache == true and $this->useCache == true){
 				$this->setCache($page,$str);
 			}
 		}
 		if($HtmlDOM == true){
 			$str = str_get_html($str);
-			if($cache == true and $this->cache == true){
+			if($cache == true and $this->useCache == true){
 				$this->setDOMCache($page,$str);
 			}
 		}
@@ -619,13 +633,50 @@ class PHPTuenti{
 		$this->chat->processUntil('session_start');
 	}
 	
+	protected function show_status($done, $total, $size=30) {
+		static $start_time;
+		if($done > $total){ return false;}
+
+		if(empty($start_time)) $start_time=time();
+		$now = time();
+
+		$perc=(double)($done/$total);
+
+		$bar=floor($perc*$size);
+
+		$status_bar="\r[";
+		$status_bar.=str_repeat("=", $bar);
+		if($bar<$size){
+			$status_bar.=">";
+			$status_bar.=str_repeat(" ", $size-$bar);
+		} else {
+			$status_bar.="=";
+		}
+
+		$disp=number_format($perc*100, 0);
+
+		$status_bar.="] ".$disp."%  ".$done."/".$total;
+
+		$rate = ($now-$start_time)/$done;
+		$left = $total - $done;
+		$eta = round($rate * $left, 2);
+
+		$elapsed = $now - $start_time;
+
+		$status_bar.= " remaining: ".number_format($eta)." sec.  elapsed: ".number_format($elapsed)." sec.";
+
+		echo $status_bar."  ";
+		if($done == $total) {
+			echo "\r[+] done".str_repeat(" ",strlen($status_bar)-8)."  \n";
+		}
+	}
 	
 	
-	
-	function __construct($cache=true){
+	function __construct($cache=true,$progress=false){
 		$this->cache = array();
 		$this->DOMCache = array();
-		$this->cache = $cache;
+		$this->useCache = $cache;
+		$this->progress = $progress;
 	}
 	
 }

@@ -7,7 +7,7 @@
 */
 
 include_once("PHPTuenti.php");
-$tuenti = new PHPTuenti(false);
+$tuenti = new PHPTuenti(false,true);
 $path = dirname(__FILE__)."/dump/";
 @mkdir($path);
 if($argv[1] == "cookie" and $argc>=2){
@@ -29,7 +29,7 @@ $path .= $tuenti->getUserId()."/";
 
 $states = $tuenti->getUserStates(200);
 
-echo "[*] Writing index page...".PHP_EOL;
+echo "[*] Writing index page...",PHP_EOL;
 file_put_contents($path."style.css",getCSS());
 @file_put_contents($path."images/".$tuenti->getUserId(),file_get_contents($tuenti->getProfileImage()));
 $index = "
@@ -52,7 +52,7 @@ $index .= "
 file_put_contents($path."index.html",$index);
 unset($states);
 
-echo "[*] writing friends page...".PHP_EOL;
+echo "[*] writing friends page...",PHP_EOL;
 $friends = $tuenti->getFriends();
 $index = "
 <html>
@@ -63,6 +63,7 @@ $index = "
 <body>";
 $index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
 $index .= '<div class="friends"><span style="font-size:20px;font-weight:bold;">Amigos</span><br/>';
+$count = count($friends);
 foreach($friends as $friend){
 	$index .= '<a href="'.$friend["userId"].'.html"><div class="friend"><img src="images/'.$friend["userId"].'"/><h2>'.$friend["userFirstName"]." ".$friend["userLastName"].'</h2><span class="ubication">'.$friend["userUbication"].'</span></div></a>';
 }
@@ -71,8 +72,7 @@ $index .= "
 </body>
 </html>";
 file_put_contents($path."friends.html",$index);
-echo "[*] writing friends personal pages...".PHP_EOL;
-$count = count($friends);
+echo "[*] writing friends personal pages...",PHP_EOL;
 $count2 = 0;
 foreach($friends as $friend){
 	++$count2;
@@ -101,7 +101,76 @@ foreach($friends as $friend){
 }
 unset($friends);
 
-die("[+] Done!!");
+echo "[*] getting messages...",PHP_EOL;
+$messages = $tuenti->getMessages("inbox");
+echo "[*] writing messages page...",PHP_EOL;
+$count = count($messages);
+$count2 = 0;
+	$index = "
+	<html>
+	<head>
+	<link rel='stylesheet' type='text/css' href='style.css' />
+	<title>Mensajes &bull; Tuenti Dump</title>
+	</head>
+	<body>";
+	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
+	$index .= '<div class="messages"><span style="font-size:20px;font-weight:bold;">Mensajes</span><br/>';
+
+foreach($messages as $threadId => $thread){
+	++$count2;
+	$index .= '<a href="thread'.$threadId.'.html">';
+	$index .= '<div class="thread">';
+	$c=0;
+	foreach($thread as $mess){
+		++$c;
+		if($c=1){
+			$index .= '<span class="last">'.substr($mess["messageBody"],0,38).'...</span><span class="date">'.date("j \d\e M, H:i",$mess["sentDate"]).'</span>';
+		}
+		if($mess["senderIsMe"]==false){
+			$index .= '<a href="'.$mess["senderId"].'.html"><span class="other">'.$mess["senderFullName"].'</span></a>';
+			break;
+		}
+	}
+	$index .= '</div></a>';
+	show_status($count2,$count);
+}
+$index .= "</div>";
+$index .= "
+</body>
+</html>";
+file_put_contents($path."messages.html",$index);
+
+echo "[*] writing threads pages...",PHP_EOL;
+$count2 = 0;
+foreach($messages as $threadId => $thread){
+	++$count2;
+	$index = "
+	<html>
+	<head>
+	<link rel='stylesheet' type='text/css' href='style.css' />
+	<title>Mensajes &bull; Tuenti Dump</title>
+	</head>
+	<body>";
+	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
+	$index .= '<div class="thread">';
+	foreach($thread as $mess){
+		++$c;
+		$index .= '<div class="message">';
+		if($mess["senderId"]==$tuenti->getUserId()){
+			$mess["senderId"] = 'index';
+		}
+		$index .= '<span class="body">'.$mess["messageBody"].'</span><a href="'.$mess["senderId"].'.html"><span class="sender"><img src="images/'.$mess["senderId"].'"/><span class="text">'.$mess["senderFullName"].'</span></span></a><span class="date">'.date("j \d\e M, H:i",$mess["sentDate"]).'</span>';
+		$index .= '</div>';
+	}	
+	$index .= "</div>";
+	$index .= "
+	</body>
+	</html>";
+	file_put_contents($path."thread".$threadId.".html",$index);	
+	show_status($count2,$count);
+}
+
+die("[+] Done!!".PHP_EOL);
 
 function getCSS(){
 $css = <<<'CSS'
@@ -178,7 +247,7 @@ img{
 .friends{
 	width:600px;
 }
-.friend{
+.friends .friend{
 	position:relative;
 	left:10px;
 	height:85px;
@@ -205,15 +274,78 @@ img{
 	height:60px;
 }
 
+.messages{
+	width:550px;
+}
+.messages .thread{
+	position:relative;
+	left:10px;
+	height:20px;
+	padding:2px;
+}
+.messages .thread .other{
+	position:absolute;
+	left:0px;
+	top:0px;
+	width:180px;
+	overflow:hidden;
+}
+.messages .thread .last{
+	position:absolute;
+	left:190px;
+}
+.messages .thread .date{
+	position:absolute;
+	right:0px;
+}
+
+.thread{
+	width:550px;
+}
+.thread .message{
+	position:relative;
+	left:10px;
+	height:80px;
+	padding:2px;
+	height:
+}
+.thread img{
+	position:relative;
+	left:0px;
+	height:30px;
+	width:30px;
+}
+.thread .message .sender{
+	position:absolute;
+	left:0px;
+	top:0px;
+	width:200px;
+	height:30px;
+	font-weight:bold;
+}
+.thread .message .sender .text{
+	position:absolute;
+	left:40px;
+	top:7px;	
+}
+.thread .message .body{
+	position:absolute;
+	top:35px;
+	left:10px;
+}
+.thread .message .date{
+	position:absolute;
+	left:210px;
+	top:0px;
+	color:grey;
+}
+
 CSS;
 
 return $css;
 }
 function show_status($done, $total, $size=30) {
-
     static $start_time;
-
-    // if we go over our bound, just ignore it
     if($done > $total) return;
 
     if(empty($start_time)) $start_time=time();
@@ -234,7 +366,7 @@ function show_status($done, $total, $size=30) {
 
     $disp=number_format($perc*100, 0);
 
-    $status_bar.="] $disp%  $done/$total";
+    $status_bar.="] ".$disp."%  ".$done."/".$total;
 
     $rate = ($now-$start_time)/$done;
     $left = $total - $done;
@@ -244,15 +376,10 @@ function show_status($done, $total, $size=30) {
 
     $status_bar.= " remaining: ".number_format($eta)." sec.  elapsed: ".number_format($elapsed)." sec.";
 
-    echo "$status_bar  ";
-    flush();
-
-    // when done, send a newline
+    echo $status_bar."  ";
     if($done == $total) {
-        echo "\r".str_repeat(" ",strlen($status_bar))."  \n";
+        echo "\r[+] done".str_repeat(" ",strlen($status_bar)-8)."  \n";
     }
-
 }
-
 
 ?>
