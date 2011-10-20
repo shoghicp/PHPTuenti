@@ -80,7 +80,11 @@ class PHPTuenti{
 		if(is_object($page->find("div#multiitemsearch",0))){
 			return false;
 		}
-		$pg = $page->find("div#blog",0)->find("div#pager_overlay",0);
+		$pg = $page->find("div#blog",0);
+		if(!is_object($pg)){
+			return 0;
+		}
+		$pg->find("div#pager_overlay",0);
 		if(!is_object($pg)){
 			return 0;
 		}
