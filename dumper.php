@@ -22,6 +22,7 @@ if($argv[1] == "cookie" and $argc>=2){
 	die("usage: php ".basename(__FILE__)." <auth_mode> <user/cookie> <password>".PHP_EOL."\tauth_mode: cookie, password");
 }
 $userinfo = $tuenti->getUserInfo();
+print_r($userinfo);
 echo "[*] starting to dump ".$userinfo["userFirstName"]." ".$userinfo["userLastName"]." account...".PHP_EOL;
 $path .= $tuenti->getUserId()."/";
 @mkdir($path);
@@ -41,6 +42,12 @@ $index = "
 <body>";
 $index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
 $index .= '<div class="userHeader"><img src="images/'.$tuenti->getUserid().'"/><h1 class="userName">'.$userinfo["userFirstName"]." ".$userinfo["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
+
+$index .= '<span style="font-size:20px;font-weight:bold;">Informacion</span><br/>';
+$index .= 'Visitas: '.$tuenti->getViews().'<br/>';
+$index .= 'Invitaciones: '.$tuenti->getRestInvites().'<br/>';
+$index .= 'Amigos: '.$tuenti->getFriendsCount().'<br/><br/>';
+
 $index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
 foreach($states as $state){
 	$index .= '<div class="state">'.$state.'</div>';
@@ -156,10 +163,8 @@ foreach($messages as $threadId => $thread){
 	foreach($thread as $mess){
 		++$c;
 		$index .= '<div class="message">';
-		if($mess["senderId"]==$tuenti->getUserId()){
-			$mess["senderId"] = 'index';
-		}
-		$index .= '<span class="body">'.$mess["messageBody"].'</span><a href="'.$mess["senderId"].'.html"><span class="sender"><img src="images/'.$mess["senderId"].'"/><span class="text">'.$mess["senderFullName"].'</span></span></a><span class="date">'.date("j \d\e M, H:i",$mess["sentDate"]).'</span>';
+		$index .= '<span class="body">'.$mess["messageBody"].'</span><a href="'.(($mess["senderId"]==$tuenti->getUserId()) ? "index":$mess["senderId"]).'.html">';
+		$index .= '<span class="sender"><img src="images/'.$mess["senderId"].'"/><span class="text">'.$mess["senderFullName"].'</span></span></a><span class="date">'.date("j \d\e M, H:i",$mess["sentDate"]).'</span>';
 		$index .= '</div>';
 	}	
 	$index .= "</div>";
@@ -379,6 +384,7 @@ function show_status($done, $total, $size=30) {
     echo $status_bar."  ";
     if($done == $total) {
         echo "\r[+] done".str_repeat(" ",strlen($status_bar)-8)."  \n";
+		unset($start_time);
     }
 }
 

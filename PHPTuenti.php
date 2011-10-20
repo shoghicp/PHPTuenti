@@ -156,7 +156,7 @@ class PHPTuenti{
 				if($this->progress==true){
 					$this->show_status($count3,$count2);
 				}
-				if($thread["output"][0]["isOldThread"]==1 and count($thread["output"][0]["messages"]) == 0){
+				if(count($thread["output"][0]["messages"]) == 0){
 					continue;
 				}
 				$messages[$mess["threadId"]] = array();
@@ -171,7 +171,7 @@ class PHPTuenti{
 					foreach($tMess["richMedia"] as $line){
 						$messages[$mess["threadId"]][$id]["messageBody"] .= "\r\n".utf8_decode($line["lines"][0]["string"]);
 					}
-					$messages[$mess["threadId"]][$id]["messageBody"] = trim($messages[$mess["threadId"]][$id]["messageBody"]);
+					$messages[$mess["threadId"]][$id]["messageBody"] = trim(strip_tags($messages[$mess["threadId"]][$id]["messageBody"]));
 				}
 			}
 		}
@@ -668,6 +668,7 @@ class PHPTuenti{
 		echo $status_bar."  ";
 		if($done == $total) {
 			echo "\r[+] done".str_repeat(" ",strlen($status_bar)-8)."  \n";
+			unset($start_time);
 		}
 	}
 	
