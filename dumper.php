@@ -95,9 +95,8 @@ $count2 = 0;
 foreach($friends as $friend){
 	++$count2;
 	@file_put_contents($path."images/".$friend["userId"],file_get_contents($tuenti->getProfileImage("medium",$friend["userId"])));
-	@file_put_contents($path."images/".$friend["userId"]."_big",file_get_contents($tuenti->getProfileImage("big",$friend["userId"])));
 	$tuenti->progress=false;
-	$states = $tuenti->getUserStates(20,$friend["userId"]);
+	$states = $tuenti->getUserStates(10,$friend["userId"]);
 	$tuenti->progress=true;
 	$index = "
 	<html>
@@ -109,8 +108,9 @@ foreach($friends as $friend){
 	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
 	$index .= '<div class="userHeader"><a href="images/'.$friend["userId"].'_big" target="_blank"><img src="images/'.$friend["userId"].'"/></a><h1 class="userName">'.$friend["userFirstName"]." ".$friend["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
 	if(count($states)>0){
+		@file_put_contents($path."images/".$friend["userId"]."_big",file_get_contents($tuenti->getProfileImage("big",$friend["userId"])));
 		$tuenti->progress=false;
-		$posts = $tuenti->getPosts(10,$friend["userId"]);
+		$posts = $tuenti->getPosts(2,$friend["userId"]);
 		$tuenti->progress=true;
 		$index .= '<div class="posts"><span style="font-size:20px;font-weight:bold;">Espacio personal</span><br/>';
 		foreach($posts as $post){
@@ -122,6 +122,8 @@ foreach($friends as $friend){
 			$index .= '<div class="state">'.$state.'</div>';
 		}
 		$index .= "</div>";
+	}else{
+		$index .= '<span style="font-size:20px;font-weight:bold;">Perfil privado</span>';
 	}
 	$index .= "
 	</body>
