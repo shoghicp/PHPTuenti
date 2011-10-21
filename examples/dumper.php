@@ -55,7 +55,14 @@ if($tuenti->getUserId() == $userId){
 	$index .= 'Visitas: '.$tuenti->getViews().'<br/>';
 	$index .= 'Invitaciones: '.$tuenti->getRestInvites().'<br/>';
 }
-$index .= 'Amigos: '.$tuenti->getFriendsCount($userId).'<br/><br/>';
+$index .= 'Amigos: '.$tuenti->getFriendsCount($userId).'<br/>';
+foreach($userinfo["personalInfo"] as $name => $val){
+	$index .= $name.': '.$val.'<br/>';
+}
+foreach($userinfo["userInterests"] as $name => $val){
+	$index .= '<h3>'.$name.'</h3><p>'.$val.'</p>';
+}
+$index .= '<br/>';
 $posts = $tuenti->getPosts(50,$userId);
 $index .= '<div class="posts"><span style="font-size:20px;font-weight:bold;">Espacio personal</span><br/>';
 foreach($posts as $post){

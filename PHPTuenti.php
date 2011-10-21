@@ -244,18 +244,38 @@ class PHPTuenti{
 	public function getUserInfo($useri=""){
 		if($useri==""){$useri=$this->getUserId();}
 			$useri = intval($useri);
-			
+			$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$useri,true);
 			if($useri!=$this->getUserId()){
-				$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$useri,true);
 				$name = explode(" ",$this->rstrstr($page->find("h1#profile_status_title",0)->innertext,"<"));
 			}else{
-				$page = $this->get("?".$this->page("index")."&ajax=1&store=1&ajax_target=canvas",true);
-				$name = explode(" ",$page->find("a#home_user_name",0)->innertext);
+				$page2 = $this->get("?".$this->page("index")."&ajax=1&store=1&ajax_target=canvas",true);
+				$name = explode(" ",$page2->find("a#home_user_name",0)->innertext);
 			}
 			$user = array();
 			$user["userFirstName"] = $name[0];
 			unset($name[0]);
 			$user["userLastName"] = trim(implode(" ",$name));
+			$user["personalInfo"] = array();
+			$temp="";
+			foreach($page->find("div.personalInfo",0)->find("dl") as $ob){
+				foreach($ob->children() as $ob2){
+					if($ob2->tag=="dt"){
+						$temp=$ob2->innertext;
+					}else{
+						$user["personalInfo"][$temp]=$ob2->plaintext;
+					}
+				}
+			}			
+			$user["userInterests"] = array();
+			$temp="";
+			foreach($page->find("div.interests",0)->find("div.body",0)->children() as $ob2){
+				if($ob2->tag=="h3"){
+					$temp=$ob2->innertext;
+				}else{
+					$user["userInterests"][$temp]=$ob2->plaintext;
+				}
+			}
+			
 			$user["userMail"] = ""; //No tengo tiempo :p
 			$user["userId"] = $useri;
 			return $user;
