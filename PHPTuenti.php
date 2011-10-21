@@ -9,7 +9,7 @@
 $PHPTuentiPath = dirname(__FILE__)."/";
 
 class PHPTuenti{
-	protected $cookie, $csrf_token, $user, $cache, $DOMcache, $chat, $useCache;
+	protected $cookie, $csrf_token, $user, $cache, $DOMcache, $useCache;
 	var $progress;
 	
 	public function logout(){
@@ -306,50 +306,7 @@ class PHPTuenti{
 	public function getUserId(){
 		return $this->user["userId"];	
 	}	
-	
-	public function uploadPhoto($path){
-		$ch = curl_init("http://fotos.tuenti.com/?m=upload&iframe=1");
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
-			'func' => 'addq',
-			'wf' => "",
-			'rotate' => 0,
-			basename($path) => "@".$path,
-		));
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-			'Referer' => 'http://www.tuenti.com/',
-		));
-		curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		$page = curl_exec($ch);
-		$ch = curl_init("http://fotos.tuenti.com/?m=upload&iframe=1");
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
-			'func' => 'checkq',
-			'wf' => "",
-			'qid' => 1,
-		));
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-			'Referer' => 'http://www.tuenti.com/',
-		));
-		curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		$page = curl_exec($ch);
-		$ch = curl_init("http://www.tuenti.com/?m=Uploadphoto&func=log_uploaded_photos&ajax=1&store=0&ajax_target=canvas");
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
-			'usi' => 1,
-			'csfr' => $this->csrf_token,
-			'uup' => 4,
-		));
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-			'Referer' => 'http://www.tuenti.com/',
-		));
-		curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		$page = curl_exec($ch);
-	}
-	
+
 	public function sendInvite($email){
 		$ch = curl_init("http://www.tuenti.com/?m=Home&func=process_invitation&ajax=1&store=0&ajax_target=canvas");
 		curl_setopt($ch, CURLOPT_POST, 1);
@@ -698,21 +655,6 @@ class PHPTuenti{
 			return true;
 		}
 		return false;
-	}
-	
-	
-	/*
-	Chat Handling (doesn't work yet!)
-	*/
-	
-	public function connectChat(){
-		if(is_object($this->chat)){
-			$this->disconnectChat();
-		}
-		$host = "xmpp3.tuenti.com";
-		$this->chat = new XMPPHP_XMPP($host,5222,$this->getUserId()."@".$host,  $this->cookie["sid"],"xmpphp");
-		$this->chat->connect();
-		$this->chat->processUntil('session_start');
 	}
 	
 	protected function show_status($done, $total, $size=30) {
