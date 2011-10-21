@@ -792,8 +792,5 @@ if(!function_exists('gzdeflate')){
 if(!function_exists('file_get_html')){
 	require_once($PHPTuentiPath."simple_html_dom.php"); //PHP Simple HTML DOM Parser
 }
-if(!class_exists('XMPPHP_XMPP')){
-	require_once($PHPTuentiPath."XMPPHP/XMPP.php"); //XMPPHP: The PHP XMPP Library
-}
 
 ?>
