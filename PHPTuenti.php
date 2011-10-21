@@ -114,7 +114,7 @@ class PHPTuenti{
 				}else{
 					$vi="";
 				}
-				$t .= strstr($str."<","<",true).$vi."\r\n";
+				$t .= $this->rstrstr($str."<","<").$vi."\r\n";
 			}
 			if(trim($t)==$posts[count($posts)-1]){
 				$this->show_status(1,1);
@@ -162,7 +162,7 @@ class PHPTuenti{
 				unset($name[0]);
 				$friends[$id]["userLastName"] = trim(implode(" ",$name));
 				$network = explode("<br/>",$friend->find("p.networks",0)->innertext);
-				$friends[$id]["userUbication"] = strstr(str_replace('</span>','',strstr($network[0],'</span>')),"<a ",true).str_get_html($network[0])->find("a",0)->innertext;
+				$friends[$id]["userUbication"] = $this->rstrstr(str_replace('</span>','',strstr($network[0],'</span>')),"<a ").str_get_html($network[0])->find("a",0)->innertext;
 				$friends[$id]["userStudies"] = str_replace('</span>','',strstr($network[1],'</span>'));
 				if($this->progress==true){
 					$this->show_status($count3,$count2);
@@ -247,7 +247,7 @@ class PHPTuenti{
 			
 			if($useri!=$this->getUserId()){
 				$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$useri,true);
-				$name = explode(" ",strstr($page->find("h1#profile_status_title",0)->innertext,"<",true));
+				$name = explode(" ",$this->rstrstr($page->find("h1#profile_status_title",0)->innertext,"<"));
 			}else{
 				$page = $this->get("?".$this->page("index")."&ajax=1&store=1&ajax_target=canvas",true);
 				$name = explode(" ",$page->find("a#home_user_name",0)->innertext);
@@ -594,9 +594,9 @@ class PHPTuenti{
 		}
 		$this->csrf_token = substr(strstr($page,',"csrf":"'),9,8);
 		$this->user = array();
-		$this->user["userId"] = strstr(substr(strstr($page,'"requestHandler":{"username":'),29),',',true);
+		$this->user["userId"] = $this->rstrstr(substr(strstr($page,'"requestHandler":{"username":'),29),',');
 		$this->user = $this->getUserInfo();
-		$this->user["userMail"] = strstr(substr(strstr($page,',"userMail":'),13),'"',true);
+		$this->user["userMail"] = $this->rstrstr(substr(strstr($page,',"userMail":'),13),'"');
 		
 	}
 	
@@ -760,6 +760,13 @@ class PHPTuenti{
 			$str .= $n."=".urlencode($v)."&";
 		}
 		return substr($str,0,-1);
+	}
+	
+	protected function rstrstr($haystack,$needle){
+		if(version_compare(PHP_VERSION,"5.3.0") >= 0){
+			return strstr($haystack,$needle,true);
+		}	
+		return array_shift(explode($needle,$haystack,2));
 	}
 	
 	
