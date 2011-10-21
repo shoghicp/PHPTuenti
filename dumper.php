@@ -53,13 +53,13 @@ $index .= 'Amigos: '.$tuenti->getFriendsCount($userId).'<br/><br/>';
 $posts = $tuenti->getPosts(50,$userId);
 $index .= '<div class="posts"><span style="font-size:20px;font-weight:bold;">Espacio personal</span><br/>';
 foreach($posts as $post){
-	$index .= '<div class="post">'.nl2br($post,true).'</div>';
+	$index .= '<div class="post">'.nl2br($post).'</div>';
 }
 $index .= '</div><br/><br/>';
 $states = $tuenti->getUserStates(200,$userId);
 $index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
 foreach($states as $state){
-	$index .= '<div class="state">'.nl2br($state,true).'</div>';
+	$index .= '<div class="state">'.nl2br($state).'</div>';
 }
 $index .= "</div>";
 $index .= "
@@ -113,7 +113,7 @@ foreach($friends as $friend){
 		$tuenti->progress=true;
 		$index .= '<div class="posts"><span style="font-size:20px;font-weight:bold;">Espacio personal</span><br/>';
 		foreach($posts as $post){
-			$index .= '<div class="post">'.nl2br($post,true).'</div>';
+			$index .= '<div class="post">'.nl2br($post).'</div>';
 		}
 		$index .= '</div><br/><br/>';	
 		$index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
