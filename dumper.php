@@ -207,7 +207,7 @@ foreach($messages as $threadId => $thread){
 die("[+] Done!!".PHP_EOL);
 
 function getCSS(){
-$css = <<<'CSS'
+$css = <<<CSS
 body{
 	font-family: Arial,Helvetica,sans-serif;
 	font-size: 12px;

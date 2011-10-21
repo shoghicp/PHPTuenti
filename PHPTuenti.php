@@ -16,10 +16,10 @@ class PHPTuenti{
 		$this->cookie['tempHash'] = "m=Logout&func=log_out";
 		$ch = curl_init("http://www.tuenti.com/?m=Logout&func=log_out&ajax=1&store=0&ajax_target=canvas");
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 			'user_id' => $this->user["userId"],
 			'csfr' => $this->csrf_token,
-		));
+		)));
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 			'Referer' => 'http://www.tuenti.com/',
 		));
@@ -49,9 +49,9 @@ class PHPTuenti{
 				$photoId = str_replace(array("&amp;s=0","#m=Photo&amp;func=view_photo&amp;collection_key="),"",$page->find("div#avatar",0)->find("a",0)->href);
 				$ch = curl_init("http://pdta.tuenti.com/");
 				curl_setopt($ch, CURLOPT_POST, 1);
-				curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 					'req' => '[{"csfr":"'.$this->csrf_token.'"},{"Photo":{"preloadPhotos":{"itemKey":"'.$photoId.'","backgrounded":false,"prefetchDirection":10,"offset":0,"source":22,"pc":{"wt":2}}}}]',
-				));
+				)));
 				curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 					'Referer' => 'http://www.tuenti.com/',
 				));
@@ -192,9 +192,9 @@ class PHPTuenti{
 		for($i=0;$i<$count;++$i){		
 			$ch = curl_init("http://www.tuenti.com/index.control.php");
 			curl_setopt($ch, CURLOPT_POST, 1);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 				'req' => '[{"csfr":"'.$this->csrf_token .'"},{"Messages":{"'.$box.'":{"page":'.$i.'}}},{"Messages":"getUnreadSpamCount"},{"Messages":"getUnreadThreads"},{"Messages":"getUnreadVoicemailCount"}]',
-			));
+			)));
 			curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 				'Referer' => 'http://www.tuenti.com/',
 			));
@@ -207,9 +207,9 @@ class PHPTuenti{
 				++$count3;
 				$ch = curl_init("http://www.tuenti.com/index.control.php");
 				curl_setopt($ch, CURLOPT_POST, 1);
-				curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 					'req' => '[{"csfr":"'.$this->csrf_token .'"},{"Messages":{"getThreadContents":{"threadId":"'.$mess["threadId"].'","boxName":"inbox"}}}]',
-				));
+				)));
 				curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 					'Referer' => 'http://www.tuenti.com/',
 				));
@@ -353,11 +353,11 @@ class PHPTuenti{
 	public function sendInvite($email){
 		$ch = curl_init("http://www.tuenti.com/?m=Home&func=process_invitation&ajax=1&store=0&ajax_target=canvas");
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 			'migration' => 'false',
 			'csfr' => $this->csrf_token,
 			'invitation_address' => $email,
-		));
+		)));
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 			'Referer' => 'http://www.tuenti.com/',
 		));
@@ -370,12 +370,12 @@ class PHPTuenti{
 		$this->cookie['tempHash'] = $this->page("home");
 		$ch = curl_init("http://www.tuenti.com/?m=Profile&func=process_add_blog_entry&ajax=1&store=0&ajax_target=blog");
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 			'user_id' => $this->user["userId"],
 			'csfr' => $this->csrf_token,
 			'blog_entry_title' => $title,
 			'blog_entry_body' => $text,
-		));
+		)));
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 			'Referer' => 'http://www.tuenti.com/',
 		));
@@ -388,9 +388,9 @@ class PHPTuenti{
 		$this->cookie['tempHash'] = $this->page("home");
 		$ch = curl_init("http://www.tuenti.com/index.php?control-mode=1");
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 			'req' => '[{"csfr":"'.$this->csrf_token.'"},{"Status":{"updateStatus":{"statusRaw":"'.addslashes($status).'","postToTwitter":'.(($twitter==true) ? "true":"false").'}}}]',
-		));
+		)));
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 			'Referer' => 'http://www.tuenti.com/',
 		));
@@ -403,9 +403,9 @@ class PHPTuenti{
 		$this->cookie['tempHash'] = $this->page("home");
 		$ch = curl_init("http://www.tuenti.com/index.php?control-mode=1");
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 			'req' => '[{"csfr":"'.$this->csrf_token.'"},{"Messages":{"newThread":{"toUserId":"'.$user.'","messageBody":"'.$text.'"}}}]',
-		));
+		)));
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 			'Referer' => 'http://www.tuenti.com/',
 		));
@@ -419,10 +419,10 @@ class PHPTuenti{
 		$this->cookie['tempHash'] = $this->page("index")."&user_id=".$user;
 		$ch = curl_init("http://www.tuenti.com/?m=Wall&func=process_create_wall_post&wall_id=1%2C".$user."&ajax=1&store=0&ajax_target=wall");
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 			'csfr' => $this->csrf_token,
 			'wall_post_body' => $status,
-		));
+		)));
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 			'Referer' => 'http://www.tuenti.com/',
 		));
@@ -435,12 +435,12 @@ class PHPTuenti{
 		$this->cookie['tempHash'] = $this->page("home");
 		$ch = curl_init("http://www.tuenti.com/?m=Settings&func=process_change_password_settings&ajax=1&store=0&ajax_target=canvas");
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 			'csfr' => $this->csrf_token,
 			'old_password' => $old,
 			'new_password' => $new,
 			'new_password_copy' => $new,
-		));
+		)));
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 			'Referer' => 'http://www.tuenti.com/',
 		));
@@ -453,14 +453,14 @@ class PHPTuenti{
 		$this->cookie['tempHash'] = $this->page("home");
 		$ch = curl_init("http://www.tuenti.com/?m=Settings&func=process_privacy_settings&ajax=1&store=0&ajax_target=canvas");
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 			'csfr' => $this->csrf_token,
 			'profile' => $profile,
 			'wall' => $wall,
 			'download_photos' => $photos,
 			'messages' => $messages,
 			'phone_numbers' => $number,			
-		));
+		)));
 		/*
 		No one: 0
 		Friends: 10
@@ -479,7 +479,7 @@ class PHPTuenti{
 		$this->cookie['tempHash'] = $this->page("home");
 		$ch = curl_init("http://www.tuenti.com/?m=Settings&func=process_settings_details&ajax=1&store=0&ajax_target=canvas");
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 			'csfr' => $this->csrf_token,
 			'hobbies' => $hobbies,
 			'music' => $music,
@@ -487,7 +487,7 @@ class PHPTuenti{
 			'books' => $books,
 			'movies' => $movies,	
 			'about_me' => $about_me,
-		));
+		)));
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 			'Referer' => 'http://www.tuenti.com/',
 		));
@@ -500,11 +500,11 @@ class PHPTuenti{
 		$this->cookie['tempHash'] = $this->page("home");
 		$ch = curl_init("http://www.tuenti.com/?m=Settings&func=process_change_name&ajax=1&store=0&ajax_target=canvas");
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 			'csfr' => $this->csrf_token,
 			'first_name' => $first,
 			'surname' => $last,
-		));
+		)));
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 			'Referer' => 'http://www.tuenti.com/',
 		));
@@ -546,13 +546,13 @@ class PHPTuenti{
 		$ch = curl_init("https://secure.tuenti.com/?m=Login&func=do_login");
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, array(
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
 			'email' => $email,
 			'remember' => 'on',
 			'input_password' => $password,
 			'timezone' => '1',
 			'timestamp' => '1',
-		));
+		)));
 		curl_setopt($ch, CURLOPT_HEADER, true);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 			'Referer' => 'http://www.tuenti.com/',
@@ -752,6 +752,14 @@ class PHPTuenti{
 			echo "\r[+] done".str_repeat(" ",strlen($status_bar)-8)."  \n";
 			unset($start_time);
 		}
+	}
+	
+	protected function toPostString($params){ //This fix a comp. issue on iOS PHP
+		$str = "";
+		foreach($params as $n=>$v){
+			$str .= $n."=".urlencode($v)."&";
+		}
+		return substr($str,0,-1);
 	}
 	
 	
