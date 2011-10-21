@@ -594,9 +594,9 @@ class PHPTuenti{
 		}
 		$this->csrf_token = substr(strstr($page,',"csrf":"'),9,8);
 		$this->user = array();
-		$this->user["userId"] = strstr(str_replace('"requestHandler":{"username":','',strstr($page,'"requestHandler":{"username":')),',',true);
+		$this->user["userId"] = strstr(substr(strstr($page,'"requestHandler":{"username":'),29),',',true);
 		$this->user = $this->getUserInfo();
-		$this->user["userMail"] = strstr(str_replace(',"userMail":"','',strstr($page,',"userMail":')),'"',true);
+		$this->user["userMail"] = strstr(substr(strstr($page,',"userMail":'),13),'"',true);
 		
 	}
 	
