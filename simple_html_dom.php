@@ -984,7 +984,7 @@ class simple_html_dom {
         // If we couldn't find a charset above, then lets try to detect one based on the text we got...
         if (empty($charset))
         {
-			if (function_exists("mb_detect_encoding")
+			if (function_exists("mb_detect_encoding"))
 			{
 				// Have php try to detect the encoding from the text given to us.
 				$charset = mb_detect_encoding($this->root->plaintext . "ascii", $encoding_list = array( "UTF-8", "CP1252" ) );
