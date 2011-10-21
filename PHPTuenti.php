@@ -9,7 +9,7 @@
 $PHPTuentiPath = dirname(__FILE__)."/";
 
 class PHPTuenti{
-	protected $cookie, $csrf_token, $user, $cache, $DOMcache, $useCache;
+	protected $cookie, $csrf_token, $user, $cache, $DOMcache, $chat, $useCache;
 	var $progress;
 	
 	public function logout(){
@@ -78,13 +78,13 @@ class PHPTuenti{
 		if($user==""){$user = $this->getUserId();}
 		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$user,true);
 		if(is_object($page->find("div#multiitemsearch",0))){
-			return false;
+			return 0;
 		}
 		$pg = $page->find("div#blog",0);
 		if(!is_object($pg)){
 			return 0;
 		}
-		$pg->find("div#pager_overlay",0);
+		$pg = $pg->find("div#pager_overlay",0);
 		if(!is_object($pg)){
 			return 0;
 		}
@@ -305,8 +305,8 @@ class PHPTuenti{
 	
 	public function getUserId(){
 		return $this->user["userId"];	
-	}	
-
+	}
+	
 	public function sendInvite($email){
 		$ch = curl_init("http://www.tuenti.com/?m=Home&func=process_invitation&ajax=1&store=0&ajax_target=canvas");
 		curl_setopt($ch, CURLOPT_POST, 1);
