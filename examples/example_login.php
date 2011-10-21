@@ -15,7 +15,7 @@ function cli_read(){
 
 
 $path = dirname(__FILE__)."/";
-require($path."PHPTuenti.php");
+require($path."../PHPTuenti.php");
 
 $tuenti = new PHPTuenti();
 echo "Email: ";

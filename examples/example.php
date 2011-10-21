@@ -30,7 +30,7 @@
 	echo "Tuenti CLI tool @shoghicp",PHP_EOL;
 	echo "0101010101010101010101010101",PHP_EOL,PHP_EOL;
 	$path = dirname(__FILE__)."/";
-	require($path."PHPTuenti.php");
+	require($path."../PHPTuenti.php");
 	if($argc<=1){
 		die("usage: php ".basename(__FILE__)." \"<cookie>\"");
 	}

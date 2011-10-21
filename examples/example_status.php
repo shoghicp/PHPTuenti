@@ -7,7 +7,7 @@
 */
 
 $path = dirname(__FILE__)."/";
-require($path."PHPTuenti.php");
+require($path."../PHPTuenti.php");
 if($argc<=2){
 	die("usage: ".basename(__FILE__)." \"<cookie>\" \"<status>\"");
 }

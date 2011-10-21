@@ -78,13 +78,13 @@ class PHPTuenti{
 		if($user==""){$user = $this->getUserId();}
 		$page = $this->get("?".$this->page("profile")."&ajax=1&store=1&ajax_target=canvas&user_id=".$user,true);
 		if(is_object($page->find("div#multiitemsearch",0))){
-			return false;
+			return 0;
 		}
 		$pg = $page->find("div#blog",0);
 		if(!is_object($pg)){
 			return 0;
 		}
-		$pg->find("div#pager_overlay",0);
+		$pg = $pg->find("div#pager_overlay",0);
 		if(!is_object($pg)){
 			return 0;
 		}
@@ -307,6 +307,8 @@ class PHPTuenti{
 		return $this->user["userId"];	
 	}	
 	
+	/* Remove This, non-Stable - START */
+	
 	public function uploadPhoto($path){
 		$ch = curl_init("http://fotos.tuenti.com/?m=upload&iframe=1");
 		curl_setopt($ch, CURLOPT_POST, 1);
@@ -349,6 +351,8 @@ class PHPTuenti{
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		$page = curl_exec($ch);
 	}
+	
+	/* Remove This, non-Stable - END */
 	
 	public function sendInvite($email){
 		$ch = curl_init("http://www.tuenti.com/?m=Home&func=process_invitation&ajax=1&store=0&ajax_target=canvas");
@@ -701,6 +705,7 @@ class PHPTuenti{
 	}
 	
 	
+	/* Remove This, non-Stable - START */
 	/*
 	Chat Handling (doesn't work yet!)
 	*/
@@ -714,6 +719,7 @@ class PHPTuenti{
 		$this->chat->connect();
 		$this->chat->processUntil('session_start');
 	}
+	/* Remove This, non-Stable - END */
 	
 	protected function show_status($done, $total, $size=30) {
 		static $start_time;
@@ -792,8 +798,10 @@ if(!function_exists('gzdeflate')){
 if(!function_exists('file_get_html')){
 	require_once($PHPTuentiPath."simple_html_dom.php"); //PHP Simple HTML DOM Parser
 }
+/* Remove This, non-Stable - START */
 if(!class_exists('XMPPHP_XMPP')){
 	require_once($PHPTuentiPath."XMPPHP/XMPP.php"); //XMPPHP: The PHP XMPP Library
 }
+/* Remove This, non-Stable - END */
 
 ?>

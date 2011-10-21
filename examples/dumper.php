@@ -6,9 +6,12 @@
  * Under LGPL LICENSE
 */
 
-include_once("PHPTuenti.php");
+
+$path = dirname(__FILE__)."/";
+include_once($path."../PHPTuenti.php");
+$path .= "dump/";
 $tuenti = new PHPTuenti(false,true);
-$path = dirname(__FILE__)."/dump/";
+
 @mkdir($path);
 @chmod($path,0755);
 if($argv[1] == "cookie" and $argc>=2){
