@@ -10,6 +10,7 @@ include_once("PHPTuenti.php");
 $tuenti = new PHPTuenti(false,true);
 $path = dirname(__FILE__)."/dump/";
 @mkdir($path);
+@chmod($path,0755);
 if($argv[1] == "cookie" and $argc>=2){
 	if(!$tuenti->login_cookie($argv[2])){
 		die("[-] bad cookie".PHP_EOL);
@@ -27,7 +28,9 @@ $userinfo = $tuenti->getUserInfo($userId);
 
 echo "[*] starting to dump ".$userinfo["userFirstName"]." ".$userinfo["userLastName"]." account...".PHP_EOL;
 $path .= $userId."/";
+
 @mkdir($path);
+@chmod($path,0755);
 @mkdir($path."images/");
 
 echo "[*] Writing index page...",PHP_EOL;
