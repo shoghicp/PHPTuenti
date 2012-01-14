@@ -47,7 +47,7 @@ $index = "
 <title>".$userinfo["userFirstName"]." ".$userinfo["userLastName"]." &bull; Tuenti Dump</title>
 </head>
 <body>";
-$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
+$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
 $index .= '<div class="userHeader"><a href="images/'.$userId.'_big" target="_blank"><img src="images/'.$userId.'"/></a><h1 class="userName">'.$userinfo["userFirstName"]." ".$userinfo["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
 
 $index .= '<span style="font-size:20px;font-weight:bold;">Informacion</span><br/>';
@@ -81,70 +81,6 @@ $index .= "
 file_put_contents($path."index.html",$index);
 unset($states);
 
-echo "[*] writing friends page...",PHP_EOL;
-$friends = $tuenti->getFriends($userId);
-$index = "
-<html>
-<head>
-<link rel='stylesheet' type='text/css' href='style.css' />
-<title>Amigos &bull; Tuenti Dump</title>
-</head>
-<body>";
-$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
-$index .= '<div class="friends"><span style="font-size:20px;font-weight:bold;">Amigos</span><br/>';
-$count = count($friends);
-foreach($friends as $friend){
-	$index .= '<a href="'.$friend["userId"].'.html"><div class="friend"><img src="images/'.$friend["userId"].'"/><h2>'.$friend["userFirstName"]." ".$friend["userLastName"].'</h2><span class="ubication">'.$friend["userUbication"].'</span></div></a>';
-}
-$index .= "</div>";
-$index .= "
-</body>
-</html>";
-file_put_contents($path."friends.html",$index);
-echo "\r";
-echo "[*] writing friends personal pages...",PHP_EOL;
-$count2 = 0;
-foreach($friends as $friend){
-	++$count2;
-	@file_put_contents($path."images/".$friend["userId"],file_get_contents($tuenti->getProfileImage("medium",$friend["userId"])));
-	$tuenti->progress=false;
-	$states = $tuenti->getUserStates(10,$friend["userId"]);
-	$tuenti->progress=true;
-	$index = "
-	<html>
-	<head>
-	<link rel='stylesheet' type='text/css' href='style.css' />
-	<title>".$friend["userFirstName"]." ".$friend["userLastName"]." &bull; Tuenti Dump</title>
-	</head>
-	<body>";
-	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
-	$index .= '<div class="userHeader"><a href="images/'.$friend["userId"].'_big" target="_blank"><img src="images/'.$friend["userId"].'"/></a><h1 class="userName">'.$friend["userFirstName"]." ".$friend["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
-	if(count($states)>0){
-		@file_put_contents($path."images/".$friend["userId"]."_big",file_get_contents($tuenti->getProfileImage("big",$friend["userId"])));
-		$tuenti->progress=false;
-		$posts = $tuenti->getPosts(2,$friend["userId"]);
-		$tuenti->progress=true;
-		$index .= '<div class="posts"><span style="font-size:20px;font-weight:bold;">Espacio personal</span><br/>';
-		foreach($posts as $post){
-			$index .= '<div class="post">'.nl2br($post).'</div>';
-		}
-		$index .= '</div><br/><br/>';	
-		$index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
-		foreach($states as $state){
-			$index .= '<div class="state">'.$state.'</div>';
-		}
-		$index .= "</div>";
-	}else{
-		$index .= '<span style="font-size:20px;font-weight:bold;">Perfil privado</span>';
-	}
-	$index .= "
-	</body>
-	</html>";
-	file_put_contents($path.$friend["userId"].".html",$index);
-	show_status($count2,$count);
-	unset($states);
-}
-unset($friends);
 
 if($tuenti->getUserId() == $userId){
 echo "[*] getting messages...",PHP_EOL;
@@ -159,7 +95,7 @@ $count2 = 0;
 	<title>Mensajes &bull; Tuenti Dump</title>
 	</head>
 	<body>";
-	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
+	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
 	$index .= '<div class="messages"><span style="font-size:20px;font-weight:bold;">Mensajes</span><br/>';
 
 foreach($messages as $threadId => $thread){
@@ -197,7 +133,7 @@ foreach($messages as $threadId => $thread){
 	<title>Mensajes &bull; Tuenti Dump</title>
 	</head>
 	<body>";
-	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a></div>';
+	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
 	$index .= '<div class="thread">';
 	foreach($thread as $mess){
 		++$c;
@@ -216,6 +152,107 @@ foreach($messages as $threadId => $thread){
 }else{
 	file_put_contents($path."messages.html","You aren't this user");
 }
+
+echo "[*] writing photos page...",PHP_EOL;
+$photos = array_merge($tuenti->getAlbum("1-".$userId), $tuenti->getAlbum("2-".$userId), $tuenti->getAlbum("17-".$userId));
+if($tuenti->getUserId() == $userId){
+	array_merge($photos, $tuenti->getAlbum("20-".$userId));
+}
+$count = count($photos);
+$count2 = 0;
+$index = "
+<html>
+<head>
+<link rel='stylesheet' type='text/css' href='style.css' />
+<title>Fotos &bull; Tuenti Dump</title>
+</head>
+<body>";
+$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
+$index .= '<div class="photos"><span style="font-size:20px;font-weight:bold;">Fotos</span><ul>';
+foreach($photos as $ph){
+	++$count2;
+	if(($count2 + 4) % 5 == 0){
+		$index .= "</ul><br/><ul>";
+	}
+	$big = $tuenti->getPhoto($ph["id"]);
+	@file_put_contents($path."images/".$ph["id"]."_small",file_get_contents($ph["thumb"]));
+	@file_put_contents($path."images/".$ph["id"],file_get_contents($big["url"]));
+	$index .= '<li><a href="'."images/".$ph["id"].'" target="_blank"><img src="'."images/".$ph["id"]."_small".'" /></a></li>';
+	show_status($count2,$count);
+}
+$index .= "</ul></div>";
+$index .= "
+</body>
+</html>";
+file_put_contents($path."photos.html",$index);
+unset($photos);
+
+echo "[*] writing friends page...",PHP_EOL;
+$friends = $tuenti->getFriends($userId);
+$index = "
+<html>
+<head>
+<link rel='stylesheet' type='text/css' href='style.css' />
+<title>Amigos &bull; Tuenti Dump</title>
+</head>
+<body>";
+$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
+$index .= '<div class="friends"><span style="font-size:20px;font-weight:bold;">Amigos</span><br/>';
+$count = count($friends);
+foreach($friends as $friend){
+	$index .= '<a href="'.$friend["userId"].'.html"><div class="friend"><img src="images/'.$friend["userId"].'"/><h2>'.$friend["userFirstName"]." ".$friend["userLastName"].'</h2><span class="ubication">'.$friend["userUbication"].'</span></div></a>';
+}
+$index .= "</div>";
+$index .= "
+</body>
+</html>";
+file_put_contents($path."friends.html",$index);
+echo "\r";
+echo "[*] writing friends personal pages...",PHP_EOL;
+$count2 = 0;
+foreach($friends as $friend){
+	++$count2;
+	@file_put_contents($path."images/".$friend["userId"],file_get_contents($tuenti->getProfileImage("medium",$friend["userId"])));
+	$tuenti->progress=false;
+	$states = $tuenti->getUserStates(10,$friend["userId"]);
+	$tuenti->progress=true;
+	$index = "
+	<html>
+	<head>
+	<link rel='stylesheet' type='text/css' href='style.css' />
+	<title>".$friend["userFirstName"]." ".$friend["userLastName"]." &bull; Tuenti Dump</title>
+	</head>
+	<body>";
+	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
+	$index .= '<div class="userHeader"><a href="images/'.$friend["userId"].'_big" target="_blank"><img src="images/'.$friend["userId"].'"/></a><h1 class="userName">'.$friend["userFirstName"]." ".$friend["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
+	if(count($states)>0){
+		@file_put_contents($path."images/".$friend["userId"]."_big",file_get_contents($tuenti->getProfileImage("big",$friend["userId"])));
+		$tuenti->progress=false;
+		$posts = $tuenti->getPosts(2,$friend["userId"]);
+		$tuenti->progress=true;
+		$index .= '<div class="posts"><span style="font-size:20px;font-weight:bold;">Espacio personal</span><br/>';
+		foreach($posts as $post){
+			$index .= '<div class="post">'.nl2br($post).'</div>';
+		}
+		$index .= '</div><br/><br/>';	
+		$index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
+		foreach($states as $state){
+			$index .= '<div class="state">'.$state.'</div>';
+		}
+		$index .= "</div>";
+	}else{
+		$index .= '<span style="font-size:20px;font-weight:bold;">Perfil privado</span>';
+	}
+	$index .= "
+	</body>
+	</html>";
+	file_put_contents($path.$friend["userId"].".html",$index);
+	show_status($count2,$count);
+	unset($states);
+}
+unset($friends);
+
+
 
 die("[+] Done!!".PHP_EOL);
 
@@ -356,6 +393,10 @@ img{
 .messages .thread .date{
 	position:absolute;
 	right:0px;
+}
+
+.photos ul,.photos li{
+	list-style:none;
 }
 
 .thread{

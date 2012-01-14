@@ -128,6 +128,50 @@ class PHPTuenti{
 		return $posts;
 	
 	}
+	
+	public function getAlbum($album){
+		$maxp = 1;
+		$photos = array();
+		for($i=0;$i<$maxp;++$i){
+			$page = $this->get("?".$this->page("albums")."&ajax=1&store=1&ajax_target=canvas&collection_key=".$album."&photos_page=".$i,true);
+			if($i == 0){
+				$maxp = $page->find("a.last",0)->rel;
+			}
+			foreach($page->find("ul.album li") as $photo){
+				$img = $photo->find("img", 0);
+				$id = str_replace("item_", "", $photo->id);
+				$photos[$id] = array(
+					"id" => $id,
+					"thumb" => $img->src,
+					"title" => $img->title,
+				);
+			}
+			
+		}
+		return $photos;	
+	}
+	
+	public function getPhoto($id){
+		$ch = curl_init("http://pdta.tuenti.com/");
+		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->toPostString(array(
+			'req' => '[{"csfr":"'.$this->csrf_token .'"},{"Photo":{"preloadPhotos":{"itemKey":"'.$id.'","backgrounded":false,"prefetchDirection":10,"offset":0,"source":1,"pc":{"wt":1}}}}]',
+		)));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+			'Referer' => 'http://www.tuenti.com/',
+		));
+		curl_setopt($ch, CURLOPT_COOKIE, $this->get_cookies());
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$ret = json_decode(curl_exec($ch),true);
+		$p = $ret["output"][0][$id];
+		return array(
+			"id" => $id,
+			"url" => $p["getPhoto"]["url"],
+			"title" => $p["getPhoto"]["title"],
+			"owner" => $p["getPhoto"]["uploaderId"],
+			"tags" => $p["getTags"]["tags"],
+		);
+	}
 
 	public function getFriendsCount($user=""){
 		if($user!=""){$user = "&user_id=".$user;}
@@ -605,6 +649,7 @@ class PHPTuenti{
 			"home" => "m=Home&func=view_home",
 			"profile" => "m=Profile&func=index",
 			"search" => "m=Multiitemsearch&func=index",
+			"albums" => "m=Albums&func=index",
 		);
 		return $pages[$page];
 	}
