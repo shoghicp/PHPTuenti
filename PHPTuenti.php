@@ -304,25 +304,30 @@ class PHPTuenti{
 			$user["userLastName"] = trim(implode(" ",$name));
 			$user["personalInfo"] = array();
 			$temp="";
-			foreach($page->find("div.personalInfo",0)->find("dl") as $ob){
-				foreach($ob->children() as $ob2){
-					if($ob2->tag=="dt"){
-						$temp=$ob2->innertext;
-					}else{
-						$user["personalInfo"][$temp]=$ob2->plaintext;
+			if(is_object($page->find("div.personalInfo",0))){
+				foreach($page->find("div.personalInfo",0)->find("dl") as $ob){
+					foreach($ob->children() as $ob2){
+						if($ob2->tag=="dt"){
+							$temp=$ob2->innertext;
+						}else{
+							$user["personalInfo"][$temp]=$ob2->plaintext;
+						}
 					}
-				}
-			}			
-			$user["userInterests"] = array();
-			$temp="";
-			foreach($page->find("div.interests",0)->find("div.body",0)->children() as $ob2){
-				if($ob2->tag=="h3"){
-					$temp=$ob2->innertext;
-				}else{
-					$user["userInterests"][$temp]=$ob2->plaintext;
 				}
 			}
 			
+			$user["userInterests"] = array();
+			$temp="";
+			
+			if(is_object($page->find("div.interests",0))){
+				foreach($page->find("div.interests",0)->find("div.body",0)->children() as $ob2){
+					if($ob2->tag=="h3"){
+						$temp=$ob2->innertext;
+					}else{
+						$user["userInterests"][$temp]=$ob2->plaintext;
+					}
+				}
+			}
 			$user["userMail"] = ""; //No tengo tiempo :p
 			$user["userId"] = $useri;
 			return $user;
