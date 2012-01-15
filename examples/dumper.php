@@ -23,7 +23,7 @@ if($argv[1] == "cookie" and $argc>=2){
 	if(!$tuenti->login($argv[2], $argv[3])){
 		die("[-] bad credentials".PHP_EOL);
 	}
-	$userId = ($argv[4]!="") ? $argv[4]:$tuenti->getUserId();
+	$userId = isset($argv[4]) ? $argv[4]:$tuenti->getUserId();
 }else{
 	die("usage: php ".basename(__FILE__)." <auth_mode> <user/cookie> <password> [userid]".PHP_EOL."\tauth_mode: cookie, password");
 }
@@ -40,6 +40,7 @@ echo "[*] Writing index page...",PHP_EOL;
 file_put_contents($path."style.css",getCSS());
 @file_put_contents($path."images/".$userId,file_get_contents($tuenti->getProfileImage("medium",$userId)));
 @file_put_contents($path."images/".$userId."_big",file_get_contents($tuenti->getProfileImage("big",$userId)));
+$states = $tuenti->getUserStates(200,$userId);
 $index = "
 <html>
 <head>
@@ -47,7 +48,7 @@ $index = "
 <title>".$userinfo["userFirstName"]." ".$userinfo["userLastName"]." &bull; Tuenti Dump</title>
 </head>
 <body>";
-$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
+$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos1.html">Fotos</a></div>';
 $index .= '<div class="userHeader"><a href="images/'.$userId.'_big" target="_blank"><img src="images/'.$userId.'"/></a><h1 class="userName">'.$userinfo["userFirstName"]." ".$userinfo["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
 
 $index .= '<span style="font-size:20px;font-weight:bold;">Informacion</span><br/>';
@@ -66,13 +67,12 @@ $index .= '<br/>';
 $posts = $tuenti->getPosts(50,$userId);
 $index .= '<div class="posts"><span style="font-size:20px;font-weight:bold;">Espacio personal</span><br/>';
 foreach($posts as $post){
-	$index .= '<div class="post">'.nl2br($post).'</div>';
+	$index .= '<div class="post"><b>'.$post["title"].'</b><br>'.stylize(nl2br($post["text"])).'</div>';
 }
 $index .= '</div><br/><br/>';
-$states = $tuenti->getUserStates(200,$userId);
 $index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
 foreach($states as $state){
-	$index .= '<div class="state">'.nl2br($state).'</div>';
+	$index .= '<div class="state">'.stylize(nl2br($state)).'</div>';
 }
 $index .= "</div>";
 $index .= "
@@ -83,20 +83,20 @@ unset($states);
 
 
 if($tuenti->getUserId() == $userId){
-echo "[*] getting messages...",PHP_EOL;
+echo "[*] getting Inbox messages...",PHP_EOL;
 $messages = $tuenti->getMessages("inbox");
-echo "[*] writing messages page...",PHP_EOL;
+echo "[*] writing Inbox messages page...",PHP_EOL;
 $count = count($messages);
 $count2 = 0;
 	$index = "
 	<html>
 	<head>
 	<link rel='stylesheet' type='text/css' href='style.css' />
-	<title>Mensajes &bull; Tuenti Dump</title>
+	<title>Mensajes Recibidos &bull; Tuenti Dump</title>
 	</head>
 	<body>";
-	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
-	$index .= '<div class="messages"><span style="font-size:20px;font-weight:bold;">Mensajes</span><br/>';
+	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos1.html">Fotos</a></div>';
+	$index .= '<div class="messages"><span style="font-size:20px;font-weight:bold;">Mensajes Recibidos</span><br/>';
 
 foreach($messages as $threadId => $thread){
 	++$count2;
@@ -120,6 +120,104 @@ $index .= "</div>";
 $index .= "
 </body>
 </html>";
+file_put_contents($path."messagesInbox.html",$index);
+
+
+
+echo "[*] getting Sent messages...",PHP_EOL;
+$mn = $tuenti->getMessages("sent");
+$messages = array_merge($messages, $mn);
+echo "[*] writing Sent messages page...",PHP_EOL;
+$count = count($mn);
+$count2 = 0;
+	$index = "
+	<html>
+	<head>
+	<link rel='stylesheet' type='text/css' href='style.css' />
+	<title>Mensajes Enviados &bull; Tuenti Dump</title>
+	</head>
+	<body>";
+	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos1.html">Fotos</a></div>';
+	$index .= '<div class="messages"><span style="font-size:20px;font-weight:bold;">Mensajes Enviados</span><br/>';
+
+foreach($mn as $threadId => $thread){
+	++$count2;
+	$index .= '<a href="thread'.$threadId.'.html">';
+	$index .= '<div class="thread">';
+	$c=0;
+	foreach($thread as $mess){
+		++$c;
+		if($c=1){
+			$index .= '<span class="last">'.substr($mess["messageBody"],0,38).'...</span><span class="date">'.date("j \d\e M, H:i",$mess["sentDate"]).'</span>';
+		}
+		if($mess["senderIsMe"]==false){
+			$index .= '<a href="'.$mess["senderId"].'.html"><span class="other">'.$mess["senderFullName"].'</span></a>';
+			break;
+		}
+	}
+	$index .= '</div></a>';
+	show_status($count2,$count);
+}
+$index .= "</div>";
+$index .= "
+</body>
+</html>";
+file_put_contents($path."messagesSent.html",$index);
+
+
+echo "[*] getting Spam messages...",PHP_EOL;
+$mn = $tuenti->getMessages("spam");
+$messages = array_merge($messages, $mn);
+echo "[*] writing Spam messages page...",PHP_EOL;
+$count = count($mn);
+$count2 = 0;
+	$index = "
+	<html>
+	<head>
+	<link rel='stylesheet' type='text/css' href='style.css' />
+	<title>Mensajes Desconocidos &bull; Tuenti Dump</title>
+	</head>
+	<body>";
+	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos1.html">Fotos</a></div>';
+	$index .= '<div class="messages"><span style="font-size:20px;font-weight:bold;">Mensajes Desconocidos</span><br/>';
+
+foreach($mn as $threadId => $thread){
+	++$count2;
+	$index .= '<a href="thread'.$threadId.'.html">';
+	$index .= '<div class="thread">';
+	$c=0;
+	foreach($thread as $mess){
+		++$c;
+		if($c=1){
+			$index .= '<span class="last">'.substr($mess["messageBody"],0,38).'...</span><span class="date">'.date("j \d\e M, H:i",$mess["sentDate"]).'</span>';
+		}
+		if($mess["senderIsMe"]==false){
+			$index .= '<a href="'.$mess["senderId"].'.html"><span class="other">'.$mess["senderFullName"].'</span></a>';
+			break;
+		}
+	}
+	$index .= '</div></a>';
+	show_status($count2,$count);
+}
+$index .= "</div>";
+$index .= "
+</body>
+</html>";
+file_put_contents($path."messagesSpam.html",$index);
+
+	$index = "
+	<html>
+	<head>
+	<link rel='stylesheet' type='text/css' href='style.css' />
+	<title>Mensajes Desconocidos &bull; Tuenti Dump</title>
+	</head>
+	<body>";
+	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos1.html">Fotos</a></div>';
+$index .= '<div class="messages"><a href="messagesInbox.html"><span style="font-size:20px;font-weight:bold;font-decoration:none;">Mensajes Recibidos</span></a><br/><a href="messagesSent.html"><span style="font-size:20px;font-weight:bold;font-decoration:none;">Mensajes Enviados</span></a><br/><a href="messagesSpam.html"><span style="font-size:20px;font-weight:bold;font-decoration:none;">Mensajes Desconocidos</span></a><br/>';
+$index .= "</div>";
+$index .= "
+</body>
+</html>";
 file_put_contents($path."messages.html",$index);
 
 echo "[*] writing threads pages...",PHP_EOL;
@@ -133,7 +231,7 @@ foreach($messages as $threadId => $thread){
 	<title>Mensajes &bull; Tuenti Dump</title>
 	</head>
 	<body>";
-	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
+	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos1.html">Fotos</a></div>';
 	$index .= '<div class="thread">';
 	foreach($thread as $mess){
 		++$c;
@@ -141,6 +239,9 @@ foreach($messages as $threadId => $thread){
 		$index .= '<span class="body">'.$mess["messageBody"].'</span><a href="'.(($mess["senderId"]==$userId) ? "index":$mess["senderId"]).'.html">';
 		$index .= '<span class="sender"><img src="images/'.$mess["senderId"].'"/><span class="text">'.$mess["senderFullName"].'</span></span></a><span class="date">'.date("j \d\e M, H:i",$mess["sentDate"]).'</span>';
 		$index .= '</div>';
+		if(!file_exists($path."images/".$mess["senderId"])){
+			@file_put_contents($path."images/".$mess["senderId"],file_get_contents($tuenti->getProfileImage("medium",$mess["senderId"])));
+		}
 	}	
 	$index .= "</div>";
 	$index .= "
@@ -160,6 +261,7 @@ if($tuenti->getUserId() == $userId){
 }
 $count = count($photos);
 $count2 = 0;
+$pages = 1;
 $index = "
 <html>
 <head>
@@ -167,13 +269,30 @@ $index = "
 <title>Fotos &bull; Tuenti Dump</title>
 </head>
 <body>";
-$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
-$index .= '<div class="photos"><span style="font-size:20px;font-weight:bold;">Fotos</span><div style="height:110px;padding:5px;">';
-foreach($photos as $ph){
-	++$count2;
-	if(($count2) % 5 == 0){
-		$index .= '</div><div style="height:110px;padding:5px;">';
+$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos1.html">Fotos</a></div>';
+$index .= '<div class="photos"><span style="font-size:20px;font-weight:bold;">Fotos '.$pages.'&nbsp;&nbsp;<a href="photos'.($pages+1).'.html">&gt;&gt;</a></span><div style="height:110px;padding:5px;">';
+foreach($photos as $ph){	
+	if($count2 > 0 and $count2 % 5 == 0){
+		$index .= '</div><br/><div style="height:130px;padding:5px;">';
 	}
+	if($count2 > 0 and $count2 % 20 == 0){
+		$index .= "</div>";
+		$index .= "
+		</body>
+		</html>";
+		file_put_contents($path."photos".$pages.".html",$index);
+		++$pages;
+		$index = "
+		<html>
+		<head>
+		<link rel='stylesheet' type='text/css' href='style.css' />
+		<title>Fotos &bull; Tuenti Dump</title>
+		</head>
+		<body>";
+		$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos1.html">Fotos</a></div>';
+		$index .= '<div class="photos"><span style="font-size:20px;font-weight:bold;">Fotos '.$pages.'&nbsp;&nbsp;<a href="photos'.max(1,($pages-1)).'.html">&lt;&lt;</a>&nbsp;&nbsp;<a href="photos'.($pages+1).'.html">&gt;&gt;</a></span><div style="height:110px;padding:5px;">';
+	}
+	++$count2;
 	$big = $tuenti->getPhoto($ph["id"]);
 	@file_put_contents($path."images/".$ph["id"]."_small",file_get_contents($ph["thumb"]));
 	@file_put_contents($path."images/".$ph["id"],file_get_contents($big["url"]));
@@ -183,11 +302,11 @@ foreach($photos as $ph){
 if(($count2 + 5) % 5 == 0){
 	$index .= "</div>";
 }
-$index .= "</div>";
-$index .= "
-</body>
-</html>";
-file_put_contents($path."photos.html",$index);
+	$index .= "</div>";
+	$index .= "
+	</body>
+	</html>";
+	file_put_contents($path."photos".$pages.".html",$index);
 unset($photos);
 
 echo "[*] writing friends page...",PHP_EOL;
@@ -199,7 +318,7 @@ $index = "
 <title>Amigos &bull; Tuenti Dump</title>
 </head>
 <body>";
-$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
+$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos1.html">Fotos</a></div>';
 $index .= '<div class="friends"><span style="font-size:20px;font-weight:bold;">Amigos</span><br/>';
 $count = count($friends);
 foreach($friends as $friend){
@@ -215,7 +334,9 @@ echo "[*] writing friends personal pages...",PHP_EOL;
 $count2 = 0;
 foreach($friends as $friend){
 	++$count2;
-	@file_put_contents($path."images/".$friend["userId"],file_get_contents($tuenti->getProfileImage("medium",$friend["userId"])));
+	if(!file_exists($path."images/".$friend["userId"])){
+		@file_put_contents($path."images/".$friend["userId"],file_get_contents($tuenti->getProfileImage("medium",$friend["userId"])));
+	}
 	$tuenti->progress=false;
 	$states = $tuenti->getUserStates(10,$friend["userId"]);
 	$tuenti->progress=true;
@@ -226,7 +347,7 @@ foreach($friends as $friend){
 	<title>".$friend["userFirstName"]." ".$friend["userLastName"]." &bull; Tuenti Dump</title>
 	</head>
 	<body>";
-	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
+	$index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos1.html">Fotos</a></div>';
 	$index .= '<div class="userHeader"><a href="images/'.$friend["userId"].'_big" target="_blank"><img src="images/'.$friend["userId"].'"/></a><h1 class="userName">'.$friend["userFirstName"]." ".$friend["userLastName"].'</h1><span class="state">'.$states[0].'</span></div><br/>';
 	if(count($states)>0){
 		@file_put_contents($path."images/".$friend["userId"]."_big",file_get_contents($tuenti->getProfileImage("big",$friend["userId"])));
@@ -235,12 +356,12 @@ foreach($friends as $friend){
 		$tuenti->progress=true;
 		$index .= '<div class="posts"><span style="font-size:20px;font-weight:bold;">Espacio personal</span><br/>';
 		foreach($posts as $post){
-			$index .= '<div class="post">'.nl2br($post).'</div>';
+			$index .= '<div class="post"><b>'.$post["title"].'</b><br>'.stylize(nl2br($post["text"])).'</div>';
 		}
 		$index .= '</div><br/><br/>';	
 		$index .= '<div class="states"><span style="font-size:20px;font-weight:bold;">Estados</span><br/>';
 		foreach($states as $state){
-			$index .= '<div class="state">'.$state.'</div>';
+			$index .= '<div class="state">'.stylize($state).'</div>';
 		}
 		$index .= "</div>";
 	}else{
@@ -258,6 +379,21 @@ unset($friends);
 
 
 die("[+] Done!!".PHP_EOL);
+
+function stylize($text){
+	if (preg_match("#(http://www.youtube.com)?/(v/([-|~_0-9A-Za-z]+)|watch\?v\=([-|~_0-9A-Za-z]+)&?.*?)#i", $text)) {
+		$vidurl = strstr($text,"?v="); //GRAB VIDEO ID
+		$vidarray = explode("v=",$vidurl);
+		$stripParameters = explode("&",$vidarray[1]);
+		$stripBreaks = explode("<br />",$stripParameters[0]);
+		$stripSpaces = explode(" ",$stripBreaks[0]);//NICE, CLEAN VIDEO ID
+		$viewVideo = '<iframe class="youtube-player" type="text/html" width="240" height="150" src="http://www.youtube.com/embed/' . $stripSpaces[0] . '" frameborder="0"></iframe>';
+		$text = preg_replace("#(http://www.youtube.com)?/(v/([-|~_0-9A-Za-z]+)|watch\?v\=([-|~_0-9A-Za-z]+)&?.*?)#i",$viewVideo, $text);
+	}
+	$text = preg_replace("/(^|[\n ])([\w]*?)((ht|f)tp(s)?:\/\/[\w]+[^ \,\"\n\r\t<]*)/is", "$1$2<a href=\"$3\" target=\"_blank\">$3</a>", $text);  
+    $text = preg_replace("/(^|[\n ])([\w]*?)((www|ftp)\.[^ \,\"\t\n\r<]*)/is", "$1$2<a href=\"http://$3\" target=\"_blank\">$3</a>", $text);  
+	return $text;
+}
 
 function getCSS(){
 $css = <<<CSS
