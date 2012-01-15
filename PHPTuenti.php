@@ -97,6 +97,9 @@ class PHPTuenti{
 		for($i=0;$i<$count;++$i){
 			$page = $this->get("?m=Profile&func=view_blog&blog_page=".$i."&ajax=1&store=1&ajax_target=blog&user_id=".$user,true);
 			$t = "";
+			if(!is_object($page->find("div#show_blog_entry",0))){
+				break;
+			}
 			foreach($page->find("div#show_blog_entry",0)->find("p") as $s){
 				if(trim($s->innertext)=="" or $s->find("span.photo",0)){
 					continue;

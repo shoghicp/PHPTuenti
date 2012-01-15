@@ -168,19 +168,22 @@ $index = "
 </head>
 <body>";
 $index .= '<div class="menuHeader"><span style="font-weight:bold;font-size:30px;">Tuenti</span>&nbsp;&nbsp;<a href="index.html">Perfil</a><a href="messages.html">Mensajes</a><a href="friends.html">Amigos</a><a href="photos.html">Fotos</a></div>';
-$index .= '<div class="photos"><span style="font-size:20px;font-weight:bold;">Fotos</span><ul>';
+$index .= '<div class="photos"><span style="font-size:20px;font-weight:bold;">Fotos</span><div style="height:110px;padding:5px;">';
 foreach($photos as $ph){
 	++$count2;
-	if(($count2 + 4) % 5 == 0){
-		$index .= "</ul><br/><ul>";
+	if(($count2) % 5 == 0){
+		$index .= '</div><div style="height:110px;padding:5px;">';
 	}
 	$big = $tuenti->getPhoto($ph["id"]);
 	@file_put_contents($path."images/".$ph["id"]."_small",file_get_contents($ph["thumb"]));
 	@file_put_contents($path."images/".$ph["id"],file_get_contents($big["url"]));
-	$index .= '<li><a href="'."images/".$ph["id"].'" target="_blank"><img src="'."images/".$ph["id"]."_small".'" /></a></li>';
+	$index .= '<div style="padding:5px;display:inline;float:left;"><a href="'."images/".$ph["id"].'" target="_blank"><img src="'."images/".$ph["id"]."_small".'" width="120" alt="'.$big["title"].'" title="'.$big["title"].'"/><div style="width:120px;font-size:9px;">'.$big["title"].'</div></a></div>';
 	show_status($count2,$count);
 }
-$index .= "</ul></div>";
+if(($count2 + 5) % 5 == 0){
+	$index .= "</div>";
+}
+$index .= "</div>";
 $index .= "
 </body>
 </html>";
@@ -393,10 +396,6 @@ img{
 .messages .thread .date{
 	position:absolute;
 	right:0px;
-}
-
-.photos ul,.photos li{
-	list-style:none;
 }
 
 .thread{
